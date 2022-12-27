@@ -5,11 +5,16 @@ myRepeat(X,N,[X|XS]):-
     N1 is N - 1,
     myRepeat(X,N1,XS).
 
-emptyCell(' ').
-player1Piece('O').
-player2Piece('X').
 numberColumns(6).
 numberLines(5).
+emptyCell(' ').
+piece(player1,'O').
+piece(player2,'X').
+
+piecesInHand(player1,12).
+piecesInHand(player2,12).
+piecesInPlay(player1,0).
+piecesInPlay(player2,0).
 
 initialState(State):- 
     emptyCell(EmptyCell),
@@ -54,7 +59,25 @@ printBoard(Board):-
     printHeader,
     printLines(Board,LineNumber).
 
+printLines([],_).
 printLines([Line|Board],RowNumber):-
     printLine(Line,RowNumber),
     RowsLeft is RowNumber -1,
     printLines(Board,RowsLeft).
+
+printRound(State):-
+    % Possibly Initialize Pieces
+    piece(player1,Player1Piece),
+    piecesInHand(player1,Player1Pieces),
+    piece(player2,Player2Piece),
+    piecesInHand(player2,Player2Pieces),
+    write('Player1\'s Hand'),nl,
+    write('->'),printN(Player1Pieces,Player1Piece),nl,
+    printBoard(State),nl,
+    write('Player2\'s Hand'),nl,
+    write('->'),printN(Player2Pieces,Player2Piece),nl,nl.
+
+
+
+
+
