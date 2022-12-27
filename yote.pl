@@ -60,7 +60,14 @@ printRound(State):-
     write('Player2\'s Hand'),nl,
     write('->'),printN(Player2Pieces,Player2Piece),nl,nl.
 
-
+validPosition(C,L):-
+    L >= 1,
+    L =< 5,
+    char_code(C,CCode),
+    char_code('f',FCode),
+    char_code('a',ACode),
+    CCode =< FCode,
+    CCode >= ACode.
 
 % Helper Functions
 
