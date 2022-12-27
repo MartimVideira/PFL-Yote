@@ -69,6 +69,15 @@ validPosition(C,L):-
     CCode =< FCode,
     CCode >= ACode.
 
+
+getMove(_State,Player,Move):-
+    write(Player),write(' Next Move:'),
+    read(Move).
+playRound(State,Player):-
+    printRound(State),
+    getMove(State,Player,Move),
+    write(Move).
+
 % Helper Functions
 
 % Creates in XS a list of N Xs.
