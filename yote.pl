@@ -19,6 +19,12 @@ initialState(State):-
     myRepeat(EmptyCell,NumberColumns,Columns),
     myRepeat(Columns,NumberLines,State).
 
+getCell(State,Column,LineNumber,Cell):-
+    char_code(Column,ColumnCode),
+    char_code('a',ACode),
+    ColumnNumber is ColumnCode - ACode,
+    at(LineNumber,State,Line),
+    at(ColumnNumber,Line,Cell).
 
 % Board Printing Rules
 printLine([]):-
@@ -100,3 +106,6 @@ myIntersperse([X|XS],YS,Res):-
     ThisRes = [X | YS],
     myIntersperse(XS,YS,Res1),
     myConcat(ThisRes,Res1,Res).
+
+at(0,[X|_],X):-!.
+at(N,[_|XS],Elem):- N1 is N -1 , at(N1,XS,Elem).
