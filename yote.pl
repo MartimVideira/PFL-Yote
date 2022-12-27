@@ -1,10 +1,6 @@
 ?- set_prolog_flag(double_quotes,chars).
-% Creates in XS a list of N Xs.
-myRepeat(_,0,[]):-!.
-myRepeat(X,N,[X|XS]):- 
-    N1 is N - 1,
-    myRepeat(X,N1,XS).
 
+% Game Variables/Rules
 numberColumns(6).
 numberLines(5).
 emptyCell(' ').
@@ -24,9 +20,7 @@ initialState(State):-
     myRepeat(Columns,NumberLines,State).
 
 
-printN(0,_):-!.
-printN(N,X):- write(X), N1 is N - 1, printN(N1,X).
-
+% Board Printing Rules
 printLine([]):-
     write('|'),nl.
 printLine([Cell|Rest]):-
@@ -38,17 +32,6 @@ printLine(Line,Number):-
     write(' '),
     printLine(Line).
 
-myConcat([],YS,YS).
-myConcat([X|XS],YS,[X|ZS]):- myConcat(XS,YS,ZS).
-
-myIntersperse([],_,[]).
-myIntersperse([X|XS],YS,Res):-
-    ThisRes = [X | YS],
-    myIntersperse(XS,YS,Res1),
-    myConcat(ThisRes,Res1,Res).
-
-printList([]).
-printList([X|XS]):- write(X),printList(XS).
 printHeader:-
     write('   '),
     myIntersperse("ABCDEF"," ",Header),
@@ -79,5 +62,25 @@ printRound(State):-
 
 
 
+% Helper Functions
 
+% Creates in XS a list of N Xs.
+myRepeat(_,0,[]):-!.
+myRepeat(X,N,[X|XS]):- 
+    N1 is N - 1,
+    myRepeat(X,N1,XS).
 
+printList([]).
+printList([X|XS]):- write(X),printList(XS).
+
+printN(0,_):-!.
+printN(N,X):- write(X), N1 is N - 1, printN(N1,X).
+
+myConcat([],YS,YS).
+myConcat([X|XS],YS,[X|ZS]):- myConcat(XS,YS,ZS).
+
+myIntersperse([],_,[]).
+myIntersperse([X|XS],YS,Res):-
+    ThisRes = [X | YS],
+    myIntersperse(XS,YS,Res1),
+    myConcat(ThisRes,Res1,Res).
