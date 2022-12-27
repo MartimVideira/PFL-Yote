@@ -3,7 +3,7 @@
 % Game Variables/Rules
 numberColumns(6).
 numberLines(5).
-emptyCell(' ').
+piece(emptyCell,' ').
 piece(player1,'O').
 piece(player2,'X').
 
@@ -13,7 +13,7 @@ piecesInPlay(player1,0).
 piecesInPlay(player2,0).
 
 initialState(State):- 
-    emptyCell(EmptyCell),
+    piece(emptyCell,EmptyCell), 
     numberColumns(NumberColumns),
     numberLines(NumberLines),
     myRepeat(EmptyCell,NumberColumns,Columns),
@@ -75,6 +75,20 @@ validPosition(C,L):-
     CCode =< FCode,
     CCode >= ACode.
 
+% Moving A Piece Into The Board
+isMoveValid(Satate,Player,[C,L]):-
+    validPosition(C,L),
+    piece(emptyCell,EmptyCell),
+    getCell(State,C,L,EmptyCell),!.
+
+% Moving A Pice Inside The Board
+isMoveValid(State,Player,[Ci,Li,Cf,Lf]):-
+    validPosition(Ci,Li),
+    validPosition(Cf,Lf),
+    piece(Player,PlayerPiece),
+    getCell(State,Ci,Li,PlayerPiece),
+    piece(emptyCell,EmptyCell),
+    getCell(State,Cf,Lf,EmptyCell).
 
 getMove(_State,Player,Move):-
     write(Player),write(' Next Move:'),
