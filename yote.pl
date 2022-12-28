@@ -103,7 +103,9 @@ isValidMove(State,Player,[Ci,Li,Cf,Lf]):-
     piece(Player,PlayerPiece),
     getCell(State,Ci,Li,PlayerPiece),
     piece(emptyCell,EmptyCell),
-    getCell(State,Cf,Lf,EmptyCell).
+    getCell(State,Cf,Lf,EmptyCell),
+    (verticalMove(Ci,Li,Cf,Lf);
+     horizontalMove(Ci,Li,Cf,Lf)).
 
 verticalMove(Ci,Li,Ci,Lf):-
     Li is Lf + 1.
@@ -129,7 +131,12 @@ whyNotValid(_State,_Player,[_Ci,_Li,Cf,Lf]):-
 whyNotValid(_State,_Player,Move):-
     notationToInts(Move,[Ci,Li,Cf,Lf]),
     \+ (verticalMove(Ci,Li,Cf,Lf);horizontalMove(Ci,Li,Cf,Lf)),
-    write('That Move Is Not Orthogonal').
+    write('That Move Is Not Orthogonal\n').
+whyNotValid(State,Player,[Ci,Li,_Cf,_Lf]):-
+    piece(Player,PlayerPiece),
+    getCell(State,Ci,Li,SelectedCell),
+    PlayerPiece \= SelectedCell,
+    write('Selected Cell Is Not '),write(Player),write('\'s Piece\n').
 
 validatePlayerMove(State,Player,Move):-
     isValidMove(State,Player,Move),!.
@@ -162,7 +169,6 @@ playMove(State,Player,[Ci,Li,Cf,Lf],NewState):-
 playRound(State,Player):-
     printRound(State),
     getPlayerMove(State,Player,Move),
-    write(Move),
     notationToInts(Move,ConvertedMove),
     playMove(State,Player,ConvertedMove,NewState),
     nextPlayer(Player,NextPlayer),
