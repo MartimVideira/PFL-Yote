@@ -90,9 +90,6 @@ validPosition(C,L):-
     char_code('a',ACode),
     CCode =< FCode,
     CCode >= ACode,!.
-validPosition(C,L):-
-    write(C),write(L),write(' Not A Valid Position'),nl.
-
 
 % Moving A Piece Into The Board
 isValidMove(State,_Player,[C,L]):-
@@ -137,12 +134,13 @@ whyNotValid(_State,_Player,Move):-
 validatePlayerMove(State,Player,Move):-
     isValidMove(State,Player,Move),!.
 validatePlayerMove(State,Player,Move):-
-    whyNotValid(State,Player,Move).
+    write('[INVALID MOVE] '),
+    whyNotValid(State,Player,Move),fail.
+
 getPlayerMove(State,Player,Move):-
     write(Player),write(' Next Move:'),
     read(AtomMove),
     atom_chars(AtomMove,Move),
-    write(AtomMove),nl,write(Move),nl,
     validatePlayerMove(State,Player,Move),!.
 getPlayerMove(State,Player,Move):- getPlayerMove(State,Player,Move).
 
