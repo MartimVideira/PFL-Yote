@@ -104,8 +104,9 @@ isValidMove(State,Player,[Ci,Li,Cf,Lf]):-
     getCell(State,Ci,Li,PlayerPiece),
     piece(emptyCell,EmptyCell),
     getCell(State,Cf,Lf,EmptyCell),
-    (verticalMove(Ci,Li,Cf,Lf);
-     horizontalMove(Ci,Li,Cf,Lf)).
+    notationToInts([Ci,Li,Cf,Lf],[CCi,LCi,CCf,LCf]),
+    (verticalMove(CCi,LCi,CCf,LCf);
+     horizontalMove(CCi,LCi,CCf,LCf)).
 
 verticalMove(Ci,Li,Ci,Lf):-
     Li is Lf + 1.
@@ -162,7 +163,7 @@ playMove(State,Player,[Ci,Li,Cf,Lf],NewState):-
     piece(emptyCell,EmptyCell),
     setAt(Ci,Line,EmptyCell,OldLine),
     setAt(Li,State,OldLine,PartialState),
-    at(Lf,State,FinalLine),
+    at(Lf,PartialState,FinalLine),
     setAt(Cf,FinalLine,PlayerPiece,NewFinalLine),
     setAt(Lf,PartialState,NewFinalLine,NewState).
 
