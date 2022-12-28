@@ -18,10 +18,10 @@ notationToInts([Column,Line],[ColumnNumber,LineNumber]):-
     char_code('1',OneCode),
     char_code(Line,LineCode),
     ColumnNumber is ColumnCode - ACode,
-    LineNumber is LineCode - OneCode.
+    LineNumber is 4 - (LineCode - OneCode),!.
 notationToInts([Ci,Li,Cf,Lf],[CCi,LCi,CCf,LCf]):-
     notationToInts([Ci,Li],[CCi,LCi]),
-    notationToInts([Cf,Lf],[CCf,LCf]).
+    notationToInts([Cf,Lf],[CCf,LCf]),!.
 
 initialState(State):- 
     piece(emptyCell,EmptyCell), 
@@ -31,12 +31,7 @@ initialState(State):-
     myRepeat(Columns,NumberLines,State).
 
 getCell(State,Column,Line,Cell):-
-    char_code(Column,ColumnCode),
-    char_code('a',ACode),
-    char_code('1',OneCode),
-    char_code(Line,LineCode),
-    ColumnNumber is ColumnCode - ACode,
-    LineNumber is LineCode - OneCode,
+    notationToInts([Column,Line],[ColumnNumber,LineNumber]),
     at(LineNumber,State,BoardLine),
     at(ColumnNumber,BoardLine,Cell).
 
@@ -120,16 +115,11 @@ getMove(State,Player,Move):-
 getMove(State,Player,Move):- getMove(State,Player,Move).
 
 playMove(State,Player,[C,L],NewState):-
-    char_code(L,LCode),
-    char_code('1',OneCode),
-    char_code(C,CCode),
-    char_code('a',ACode),
-    ColumnNumber is CCode - ACode,
-    LineNumber is LCode - OneCode,
-    at(ColumnNumber,State,Line),
+    notationToInts([C,L],[ColumnNumber,LineNumber]),
+    at(LineNumber,State,Line),
     piece(Player,PlayerPiece),
-    setAt(LineNumber,Line,PlayerPiece,NewLine),
-    setAt(ColumnNumber,State,NewLine,NewState).
+    setAt(ColumnNumber,Line,PlayerPiece,NewLine),
+    setAt(LineNumber,State,NewLine,NewState).
 
 playRound(State,Player):-
     printRound(State),
