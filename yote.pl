@@ -1,4 +1,5 @@
 ?- set_prolog_flag(double_quotes,chars).
+:- consult('utils.pl').
 
 % Game Variables/Rules
 numberColumns(6).
@@ -92,15 +93,12 @@ validPosition(C,L):-
 validPosition(C,L):-
     write(C),write(L),write(' Not A Valid Position'),nl.
 
+
 % Moving A Piece Into The Board
 isValidMove(State,_Player,[C,L]):-
     validPosition(C,L),
     piece(emptyCell,EmptyCell),
     getCell(State,C,L,EmptyCell),!.
-isValidMove(State,_Player,[C,L]):-
-    validPosition(C,L),
-    getCell(State,C,L,Cell),
-    write('Cell In This Position Is:'),write(Cell),nl.
 % Moving A Pice Inside The Board
 isValidMove(State,Player,[Ci,Li,Cf,Lf]):-
     validPosition(Ci,Li),
@@ -110,13 +108,43 @@ isValidMove(State,Player,[Ci,Li,Cf,Lf]):-
     piece(emptyCell,EmptyCell),
     getCell(State,Cf,Lf,EmptyCell).
 
-getMove(State,Player,Move):-
+verticalMove(Ci,Li,Ci,Lf):-
+    Li is Lf + 1.
+verticalMove(Ci,Li,Ci,Lf):-
+    Li is Lf - 1.
+horizontalMove(Ci,Li,Cf,Li):-
+    Ci is Cf + 1.
+horizontalMove(Ci,Li,Cf,Li):-
+    Ci is Cf - 1.
+
+whyNotValid(_State,_Player,[C,L]):-
+    \+ validPosition(C,L),!,
+    write('That Is Not A Valid Position\n').
+whyNotValid(State,_Player,[C,L]):-
+    getCell(State,C,L,Cell),
+    write('Cell In This Position Is:'),write(Cell),nl.
+whyNotValid(_State,_Player,[Ci,Li,_Cf,_Lf]):-
+    \+validPosition(Ci,Li),
+    write('That Is Not A Valid Position\n').
+whyNotValid(_State,_Player,[_Ci,_Li,Cf,Lf]):-
+    \+validPosition(Cf,Lf),
+    write('That Is Not A Valid Position\n').
+whyNotValid(_State,_Player,Move):-
+    notationToInts(Move,[Ci,Li,Cf,Lf]),
+    \+ (verticalMove(Ci,Li,Cf,Lf);horizontalMove(Ci,Li,Cf,Lf)),
+    write('That Move Is Not Orthogonal').
+
+validatePlayerMove(State,Player,Move):-
+    isValidMove(State,Player,Move),!.
+validatePlayerMove(State,Player,Move):-
+    whyNotValid(State,Player,Move).
+getPlayerMove(State,Player,Move):-
     write(Player),write(' Next Move:'),
     read(AtomMove),
     atom_chars(AtomMove,Move),
     write(AtomMove),nl,write(Move),nl,
-    isValidMove(State,Player,Move),!.
-getMove(State,Player,Move):- getMove(State,Player,Move).
+    validatePlayerMove(State,Player,Move),!.
+getPlayerMove(State,Player,Move):- getPlayerMove(State,Player,Move).
 
 playMove(State,Player,[C,L],NewState):-
     at(L,State,Line),
@@ -135,40 +163,10 @@ playMove(State,Player,[Ci,Li,Cf,Lf],NewState):-
 
 playRound(State,Player):-
     printRound(State),
-    getMove(State,Player,Move),
+    getPlayerMove(State,Player,Move),
     write(Move),
     notationToInts(Move,ConvertedMove),
     playMove(State,Player,ConvertedMove,NewState),
     nextPlayer(Player,NextPlayer),
     playRound(NewState,NextPlayer).
 
-% Helper Functions
-
-% Creates in XS a list of N Xs.
-myRepeat(_,0,[]):-!.
-myRepeat(X,N,[X|XS]):- 
-    N1 is N - 1,
-    myRepeat(X,N1,XS).
-
-printList([]).
-printList([X|XS]):- write(X),printList(XS).
-
-printN(0,_):-!.
-printN(N,X):- write(X), N1 is N - 1, printN(N1,X).
-
-myConcat([],YS,YS).
-myConcat([X|XS],YS,[X|ZS]):- myConcat(XS,YS,ZS).
-
-myIntersperse([],_,[]).
-myIntersperse([X|XS],YS,Res):-
-    ThisRes = [X | YS],
-    myIntersperse(XS,YS,Res1),
-    myConcat(ThisRes,Res1,Res).
-
-at(0,[X|_],X):-!.
-at(N,[_|XS],Elem):- N1 is N -1 , at(N1,XS,Elem).
-
-setAt(0,[_|XS],Y,[Y|XS]):-!.
-setAt(N,[X|XS],Y,[X|ZS]):-
-    N1 is N - 1,
-    setAt(N1,XS,Y,ZS).
