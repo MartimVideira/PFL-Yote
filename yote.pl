@@ -12,6 +12,17 @@ piecesInHand(player2,12).
 piecesInPlay(player1,0).
 piecesInPlay(player2,0).
 
+notationToInts([Column,Line],[ColumnNumber,LineNumber]):-
+    char_code(Column,ColumnCode),
+    char_code('a',ACode),
+    char_code('1',OneCode),
+    char_code(Line,LineCode),
+    ColumnNumber is ColumnCode - ACode,
+    LineNumber is LineCode - OneCode.
+notationToInts([Ci,Li,Cf,Lf],[CCi,LCi,CCf,LCf]):-
+    notationToInts([Ci,Li],[CCi,LCi]),
+    notationToInts([Cf,Lf],[CCf,LCf]).
+
 initialState(State):- 
     piece(emptyCell,EmptyCell), 
     numberColumns(NumberColumns),
