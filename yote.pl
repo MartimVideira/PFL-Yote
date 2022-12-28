@@ -12,6 +12,9 @@ piecesInHand(player2,12).
 piecesInPlay(player1,0).
 piecesInPlay(player2,0).
 
+nextPlayer(player1,player2).
+nextPlayer(player2,player1).
+
 notationToInts([Column,Line],[ColumnNumber,LineNumber]):-
     char_code(Column,ColumnCode),
     char_code('a',ACode),
@@ -136,7 +139,8 @@ playRound(State,Player):-
     write(Move),
     notationToInts(Move,ConvertedMove),
     playMove(State,Player,ConvertedMove,NewState),
-    playRound(NewState,Player).
+    nextPlayer(Player,NextPlayer),
+    playRound(NewState,NextPlayer).
 
 % Helper Functions
 
