@@ -116,17 +116,26 @@ getMove(State,Player,Move):-
 getMove(State,Player,Move):- getMove(State,Player,Move).
 
 playMove(State,Player,[C,L],NewState):-
-    notationToInts([C,L],[ColumnNumber,LineNumber]),
-    at(LineNumber,State,Line),
+    at(L,State,Line),
     piece(Player,PlayerPiece),
-    setAt(ColumnNumber,Line,PlayerPiece,NewLine),
-    setAt(LineNumber,State,NewLine,NewState).
+    setAt(C,Line,PlayerPiece,NewLine),
+    setAt(L,State,NewLine,NewState).
+playMove(State,Player,[Ci,Li,Cf,Lf],NewState):-
+    at(Li,State,Line),
+    piece(Player,PlayerPiece),
+    piece(emptyCell,EmptyCell),
+    setAt(Ci,Line,EmptyCell,OldLine),
+    setAt(Li,State,OldLine,PartialState),
+    at(Lf,State,FinalLine),
+    setAt(Cf,FinalLine,PlayerPiece,NewFinalLine),
+    setAt(Lf,PartialState,NewFinalLine,NewState).
 
 playRound(State,Player):-
     printRound(State),
     getMove(State,Player,Move),
     write(Move),
-    playMove(State,Player,Move,NewState),
+    notationToInts(Move,ConvertedMove),
+    playMove(State,Player,ConvertedMove,NewState),
     playRound(NewState,Player).
 
 % Helper Functions
