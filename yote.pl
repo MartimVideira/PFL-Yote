@@ -19,12 +19,15 @@ initialState(State):-
     myRepeat(EmptyCell,NumberColumns,Columns),
     myRepeat(Columns,NumberLines,State).
 
-getCell(State,Column,LineNumber,Cell):-
+getCell(State,Column,Line,Cell):-
     char_code(Column,ColumnCode),
     char_code('a',ACode),
+    char_code('1',OneCode),
+    char_code(Line,LineCode),
     ColumnNumber is ColumnCode - ACode,
-    at(LineNumber,State,Line),
-    at(ColumnNumber,Line,Cell).
+    LineNumber is LineCode - OneCode,
+    at(LineNumber,State,BoardLine),
+    at(ColumnNumber,BoardLine,Cell).
 
 % Board Printing Rules
 printLine([]):-
@@ -67,22 +70,30 @@ printRound(State):-
     write('->'),printN(Player2Pieces,Player2Piece),nl,nl.
 
 validPosition(C,L):-
-    L >= 1,
-    L =< 5,
+    char_code(L,LCode),
+    char_code('1',OneCode),
+    char_code('5',FiveCode),
+    LCode >= OneCode,
+    LCode =< FiveCode,
     char_code(C,CCode),
     char_code('f',FCode),
     char_code('a',ACode),
     CCode =< FCode,
-    CCode >= ACode.
+    CCode >= ACode,!.
+validPosition(C,L):-
+    write(C),write(L),write(' Not A Valid Position'),nl.
 
 % Moving A Piece Into The Board
-isMoveValid(Satate,Player,[C,L]):-
+isValidMove(State,_Player,[C,L]):-
     validPosition(C,L),
     piece(emptyCell,EmptyCell),
     getCell(State,C,L,EmptyCell),!.
-
+isValidMove(State,_Player,[C,L]):-
+    validPosition(C,L),
+    getCell(State,C,L,Cell),
+    write('Cell In This Position Is:'),write(Cell),nl.
 % Moving A Pice Inside The Board
-isMoveValid(State,Player,[Ci,Li,Cf,Lf]):-
+isValidMove(State,Player,[Ci,Li,Cf,Lf]):-
     validPosition(Ci,Li),
     validPosition(Cf,Lf),
     piece(Player,PlayerPiece),
@@ -90,13 +101,31 @@ isMoveValid(State,Player,[Ci,Li,Cf,Lf]):-
     piece(emptyCell,EmptyCell),
     getCell(State,Cf,Lf,EmptyCell).
 
-getMove(_State,Player,Move):-
+getMove(State,Player,Move):-
     write(Player),write(' Next Move:'),
-    read(Move).
+    read(Move),
+    write(Move),
+    isValidMove(State,Player,Move),!.
+getMove(State,Player,Move):- getMove(State,Player,Move).
+
+playMove(State,Player,[C,L],NewState):-
+    char_code(L,LCode),
+    char_code('1',OneCode),
+    char_code(C,CCode),
+    char_code('a',ACode),
+    ColumnNumber is CCode - ACode,
+    LineNumber is LCode - OneCode,
+    at(ColumnNumber,State,Line),
+    piece(Player,PlayerPiece),
+    setAt(LineNumber,Line,PlayerPiece,NewLine),
+    setAt(ColumnNumber,State,NewLine,NewState).
+
 playRound(State,Player):-
     printRound(State),
     getMove(State,Player,Move),
-    write(Move).
+    write(Move),
+    playMove(State,Player,Move,NewState),
+    playRound(NewState,Player).
 
 % Helper Functions
 
@@ -123,3 +152,8 @@ myIntersperse([X|XS],YS,Res):-
 
 at(0,[X|_],X):-!.
 at(N,[_|XS],Elem):- N1 is N -1 , at(N1,XS,Elem).
+
+setAt(0,[_|XS],Y,[Y|XS]):-!.
+setAt(N,[X|XS],Y,[X|ZS]):-
+    N1 is N - 1,
+    setAt(N1,XS,Y,ZS).
