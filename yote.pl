@@ -109,8 +109,9 @@ isValidMove(State,Player,[Ci,Li,Cf,Lf]):-
 
 getMove(State,Player,Move):-
     write(Player),write(' Next Move:'),
-    read(Move),
-    write(Move),
+    read(AtomMove),
+    atom_chars(AtomMove,Move),
+    write(AtomMove),nl,write(Move),nl,
     isValidMove(State,Player,Move),!.
 getMove(State,Player,Move):- getMove(State,Player,Move).
 
