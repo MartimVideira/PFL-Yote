@@ -1,6 +1,6 @@
 # Yote 
 
-- [Yote][https://www.di.fc.ul.pt/~jpn/gv/yote.htm)
+- [Yote](https://www.di.fc.ul.pt/~jpn/gv/yote.htm)
 
 The game is played on a 5×6 board, which is empty at the beginning of the game.
 Each player has twelve pieces in hand. Players alternate turns, with White
