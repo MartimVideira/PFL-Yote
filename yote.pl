@@ -181,10 +181,7 @@ playMove(State,Player,[C,L],NewState):-
     piece(Player,PlayerPiece),
     setAt(C,Line,PlayerPiece,NewLine),
     setAt(L,State,NewLine,NewState).
-
 playMove(State,Player,[Ci,Li,Cf,Lf],NewState):-
-
-    decrement_hand_pieces(Player),
     at(Li,State,Line),
     piece(Player,PlayerPiece),
     piece(emptyCell,EmptyCell),

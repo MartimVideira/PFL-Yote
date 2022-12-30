@@ -9,7 +9,8 @@ moving first. In a move, a player may either:
 - [x] Place a piece in hand on any empty cell of the board.
 - [x] Move one of their pieces already on the board orthogonally to an empty adjacent cell.
 - [ ] Capture an opponent's piece if it is orthogonally adjacent to a player's piece, by jumping to the empty cell immediately beyond it. The captured piece is removed from the board, and the capturing player removes another of the opponent's pieces of his choosing from the board.
-- [ ] The player who captures all the opponent's pieces is the winner. The game can end in a draw if both players are left with three or fewer pieces.
+- [ ] The player who captures all the opponent's pieces is the winner. The game
+  can end in a draw if both players are left with three or fewer pieces.
 
 ## Optional rules
 Yoté is sometimes played using one or more additional rules:
