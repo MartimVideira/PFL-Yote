@@ -1,6 +1,7 @@
 ?- set_prolog_flag(double_quotes,chars).
 :- consult('utils.pl').
 :- dynamic(piecesInHand/2).
+:- dynamic(piecesCaptured/2).
 
 % Game Variables/Rules
 numberColumns(6).
@@ -11,6 +12,8 @@ piece(player2,'X').
 
 piecesInHand(player1,12).
 piecesInHand(player2,12).
+piecesCaptured(player1,0).
+piecesCaptured(player2,0).
 piecesInPlay(player1,0).
 piecesInPlay(player2,0).
 
@@ -173,8 +176,7 @@ getPlayerMove(State,Player,Move):-
 getPlayerMove(State,Player,Move):- getPlayerMove(State,Player,Move).
 
 playMove(State,Player,[C,L],NewState):-
-    decrement_pieces(Player),
-    write('hey'),
+    decrement_hand_pieces(Player),
     at(L,State,Line),
     piece(Player,PlayerPiece),
     setAt(C,Line,PlayerPiece,NewLine),
@@ -182,8 +184,7 @@ playMove(State,Player,[C,L],NewState):-
 
 playMove(State,Player,[Ci,Li,Cf,Lf],NewState):-
 
-    decrement_pieces(Player),
-    write('hey'),
+    decrement_hand_pieces(Player),
     at(Li,State,Line),
     piece(Player,PlayerPiece),
     piece(emptyCell,EmptyCell),
@@ -192,15 +193,15 @@ playMove(State,Player,[Ci,Li,Cf,Lf],NewState):-
     at(Lf,PartialState,FinalLine),
     setAt(Cf,FinalLine,PlayerPiece,NewFinalLine),
     setAt(Lf,PartialState,NewFinalLine,FinalState),
-    removePieces(FinalState, [Ci, Li, Cf, Lf], NewState).
+    removePieces(Player, FinalState, [Ci, Li, Cf, Lf], NewState).
 
 
-removePieces(State,[Ci,Li,Cf,Lf], NewState):-
+removePieces(Player, State,[Ci,Li,Cf,Lf], NewState):-
 
-    (Ci is Cf - 2, removeCapturedPiece(State, Cf - 1, Li, NewState));
+    (((Ci is Cf - 2, removeCapturedPiece(State, Cf - 1, Li, NewState));
     (Ci is Cf + 2, removeCapturedPiece(State, Cf + 1, Li, NewState));
     (Li is Lf - 2, removeCapturedPiece(State, Cf, Lf - 1, NewState));
-    (Li is Lf + 2, removeCapturedPiece(State, Cf, Lf + 1, NewState));
+    (Li is Lf + 2, removeCapturedPiece(State, Cf, Lf + 1, NewState))), increment_captured_pieces(Player));
 
     ( at(Li,State,Line),
     setAt(Li, State,Line,NewState),
@@ -223,7 +224,10 @@ playRound(State,Player):-
     playRound(NewState,NextPlayer).
 
 
-decrement_pieces(Player) :-
-    write(Player),
+increment_captured_pieces(Player):-
+    retract(piecesCaptured(Player, PlayerPieces)),
+    assertz(piecesCaptured(Player, PlayerPieces + 1)).
+    
+decrement_hand_pieces(Player):-
     retract(piecesInHand(Player, PlayerPieces)),
-    assertz(piecesInHand(Player, PlayerPieces -1)).
+    assertz(piecesInHand(Player, PlayerPieces - 1)).
