@@ -5,7 +5,7 @@ myRepeat(_,0,[]):-!.
 myRepeat(X,N,[X|XS]):- 
     N1 is N - 1,
     myRepeat(X,N1,XS).
-
+    
 printList([]).
 printList([X|XS]):- write(X),printList(XS).
 
