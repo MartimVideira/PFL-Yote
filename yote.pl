@@ -31,20 +31,20 @@ notationToInts([Ci,Li,Cf,Lf],[CCi,LCi,CCf,LCf]):-
     notationToInts([Ci,Li],[CCi,LCi]),
     notationToInts([Cf,Lf],[CCf,LCf]),!.
 
-initialState(State):- 
+initialState([Board,player1,[12,0],[12,0]]):- 
     piece(emptyCell,EmptyCell), 
     numberColumns(NumberColumns),
     numberLines(NumberLines),
     myRepeat(EmptyCell,NumberColumns,Columns),
-    myRepeat(Columns,NumberLines,State).
+    myRepeat(Columns,NumberLines,Board).
 
-getCell(State,Column,Line,Cell):-
+getCell(Board,Column,Line,Cell):-
     notationToInts([Column,Line],[ColumnNumber,LineNumber]),
-    at(LineNumber,State,BoardLine),
+    at(LineNumber,Board,BoardLine),
     at(ColumnNumber,BoardLine,Cell).
 
-getCellInts(State,Column,Line,Cell):-
-    at(Line,State,BoardLine),
+getCellInts([Board|_Rest],Column,Line,Cell):-
+    at(Line,Board,BoardLine),
     at(Column,BoardLine,Cell).
 
 % Board Printing Rules
@@ -75,15 +75,13 @@ printLines([Line|Board],RowNumber):-
     RowsLeft is RowNumber -1,
     printLines(Board,RowsLeft).
 
-printRound(State):-
+printRound([Board,_Player,[Player1Pieces,_],[Player2Pieces,_]]):-
     % Possibly Initialize Pieces
     piece(player1,Player1Piece),
-    piecesInHand(player1,Player1Pieces),
     piece(player2,Player2Piece),
-    piecesInHand(player2,Player2Pieces),
     write('Player1\'s Hand'),nl,
     write('->'),printN(Player1Pieces,Player1Piece),nl,
-    printBoard(State),nl,
+    printBoard(Board),nl,
     write('Player2\'s Hand'),nl,
     write('->'),printN(Player2Pieces,Player2Piece),nl,nl.
 
@@ -100,32 +98,32 @@ validPosition(C,L):-
     CCode >= ACode,!.
 
 % Moving A Piece Into The Board
-isValidMove(State,_Player,[C,L]):-
+isValidMove([Board|_],[C,L]):-
     validPosition(C,L),
     piece(emptyCell,EmptyCell),
-    getCell(State,C,L,EmptyCell),!.
+    getCell(Board,C,L,EmptyCell),!.
 
 % Moving A Pice Inside The Board
-isValidMove(State,Player,[Ci,Li,Cf,Lf]):-
+isValidMove([Board,Player|_],[Ci,Li,Cf,Lf]):-
     validPosition(Ci,Li),
     validPosition(Cf,Lf),
     piece(Player,PlayerPiece),
-    getCell(State,Ci,Li,PlayerPiece),
+    getCell(Board,Ci,Li,PlayerPiece),
     piece(emptyCell,EmptyCell),
-    getCell(State,Cf,Lf,EmptyCell),
+    getCell(Board,Cf,Lf,EmptyCell),
     notationToInts([Ci,Li,Cf,Lf],[CCi,LCi,CCf,LCf]),
     (verticalMove(CCi,LCi,CCf,LCf);
      horizontalMove(CCi,LCi,CCf,LCf);
-     captureHorizontal(State,Player, CCi,LCi,CCf,LCf); 
-     captureVertical(State,Player, CCi,LCi,CCf,LCf)).
+     captureHorizontal(Board,Player, CCi,LCi,CCf,LCf); 
+     captureVertical(Board,Player, CCi,LCi,CCf,LCf)).
 
-captureHorizontal(State, Player, Ci, Li, Cf, Li):-
-    (Ci is Cf - 2, piece(Player,PlayerPiece), getCellInts(State,Cf-1,Li,SelectedCell), PlayerPiece \= SelectedCell, SelectedCell \= ' ');
-    (Ci is Cf + 2, piece(Player,PlayerPiece), getCellInts(State,Cf+1,Li,SelectedCell),  PlayerPiece \= SelectedCell, SelectedCell \= ' ').
+captureHorizontal([Board,Player|_],Ci, Li, Cf, Li):-
+    (Ci is Cf - 2, piece(Player,PlayerPiece), getCellInts(Board,Cf-1,Li,SelectedCell), PlayerPiece \= SelectedCell, SelectedCell \= ' ');
+    (Ci is Cf + 2, piece(Player,PlayerPiece), getCellInts(Board,Cf+1,Li,SelectedCell),  PlayerPiece \= SelectedCell, SelectedCell \= ' ').
 
-captureVertical(State, Player, Ci, Li, Ci, Lf):-
-    (Li is Lf - 2, piece(Player,PlayerPiece), getCellInts(State,Ci,Lf - 1,SelectedCell), PlayerPiece \= SelectedCell, SelectedCell \= ' ');
-    (Li is Lf + 2, piece(Player,PlayerPiece), getCellInts(State,Ci,Lf + 1,SelectedCell), PlayerPiece \= SelectedCell, SelectedCell \= ' ').
+captureVertical([Board,Player|_],Ci, Li, Ci, Lf):-
+    (Li is Lf - 2, piece(Player,PlayerPiece), getCellInts(Board,Ci,Lf - 1,SelectedCell), PlayerPiece \= SelectedCell, SelectedCell \= ' ');
+    (Li is Lf + 2, piece(Player,PlayerPiece), getCellInts(Board,Ci,Lf + 1,SelectedCell), PlayerPiece \= SelectedCell, SelectedCell \= ' ').
 
 
 verticalMove(Ci,Li,Ci,Lf):-
@@ -137,64 +135,62 @@ horizontalMove(Ci,Li,Cf,Li):-
 horizontalMove(Ci,Li,Cf,Li):-
     Ci is Cf - 1.
 
-whyNotValid(_State,_Player,[C,L]):-
+whyNotValid(_State,[C,L]):-
     \+ validPosition(C,L),!,
     write('That Is Not A Valid Position\n').
-whyNotValid(State,_Player,[C,L]):-
-    getCell(State,C,L,Cell),
+whyNotValid([Board|_],[C,L]):-
+    getCell(Board,C,L,Cell),
     write('Cell In This Position Is:'),write(Cell),nl.
-whyNotValid(_State,_Player,[Ci,Li,_Cf,_Lf]):-
-    \+validPosition(Ci,Li),
+whyNotValid(_State,[Ci,Li,Cf,Lf]):-
+    (\+validPosition(Ci,Li);
+    \+validPosition(Cf,Lf)),
     write('That Is Not A Valid Position\n').
-whyNotValid(_State,_Player,[_Ci,_Li,Cf,Lf]):-
-    \+validPosition(Cf,Lf),
-    write('That Is Not A Valid Position\n').
-whyNotValid(_State,_Player,Move):-
+whyNotValid([Board,Player|_],Move):-
     notationToInts(Move,[Ci,Li,Cf,Lf]),
     \+ (verticalMove(Ci,Li,Cf,Lf);
         horizontalMove(Ci,Li,Cf,Lf);
-        captureHorizontal(_State, _Player, Ci,Li,Cf,Lf); 
-        captureVertical(_State, _Player, Ci,Li,Cf,Lf)),
+        captureHorizontal(Board, Player, Ci,Li,Cf,Lf); 
+        captureVertical(Board, Player, Ci,Li,Cf,Lf)),
     write('That Move Is Not Orthogonal\n').
-whyNotValid(State,Player,[Ci,Li,_Cf,_Lf]):-
+whyNotValid([Board,Player|_],[Ci,Li,_Cf,_Lf]):-
     piece(Player,PlayerPiece),
-    getCell(State,Ci,Li,SelectedCell),
+    getCell(Board,Ci,Li,SelectedCell),
     PlayerPiece \= SelectedCell,
     write('Selected Cell Is Not '),write(Player),write('\'s Piece\n').
 
-validatePlayerMove(State,Player,Move):-
-    isValidMove(State,Player,Move),!.
-validatePlayerMove(State,Player,Move):-
+validatePlayerMove(State,Move):-
+    isValidMove(State,Move),!.
+validatePlayerMove(State,Move):-
     write('[INVALID MOVE] '),
-    whyNotValid(State,Player,Move),fail.
+    whyNotValid(State,Move),fail.
 
-getPlayerMove(State,Player,Move):-
+getPlayerMove([Board,Player|Rest],Move):-
     write(Player),write(' Next Move:'),
     read(AtomMove),
     atom_chars(AtomMove,Move),
-    validatePlayerMove(State,Player,Move),!.
-getPlayerMove(State,Player,Move):- getPlayerMove(State,Player,Move).
+    validatePlayerMove([Board,Player|Rest],Move),!.
+getPlayerMove(State,Move):- getPlayerMove(State,Move).
 
-playMove(State,Player,[C,L],NewState):-
-    decrement_hand_pieces(Player),
-    at(L,State,Line),
+playMove([Board,Player|Rest],[C,L],NewState):-
+    at(L,Board,Line),
     piece(Player,PlayerPiece),
     setAt(C,Line,PlayerPiece,NewLine),
-    setAt(L,State,NewLine,NewState).
-playMove(State,Player,[Ci,Li,Cf,Lf],NewState):-
-    at(Li,State,Line),
+    setAt(L,Board,NewLine,NewBoard),
+    decrement_hand_pieces([NewBoard,Player|Rest],Player,NewState).
+playMove([Board,Player|Rest],[Ci,Li,Cf,Lf],FinalState):-
+    at(Li,Board,Line),
     piece(Player,PlayerPiece),
     piece(emptyCell,EmptyCell),
     setAt(Ci,Line,EmptyCell,OldLine),
-    setAt(Li,State,OldLine,PartialState),
-    at(Lf,PartialState,FinalLine),
+    setAt(Li,Board,OldLine,PartialBoard),
+    at(Lf,PartialBoard,FinalLine),
     setAt(Cf,FinalLine,PlayerPiece,NewFinalLine),
-    setAt(Lf,PartialState,NewFinalLine,FinalState),
-    removePieces(Player, FinalState, [Ci, Li, Cf, Lf], NewState).
+    setAt(Lf,PartialBoard,NewFinalLine,FinalBoard),
+    removePieces([FinalBoard,Player|Rest], [Ci, Li, Cf, Lf],FinalState).
 
 
+% Refazer esta funcao
 removePieces(Player, State,[Ci,Li,Cf,Lf], NewState):-
-
     (((Ci is Cf - 2, removeCapturedPiece(State, Cf - 1, Li, NewState));
     (Ci is Cf + 2, removeCapturedPiece(State, Cf + 1, Li, NewState));
     (Li is Lf - 2, removeCapturedPiece(State, Cf, Lf - 1, NewState));
@@ -211,20 +207,20 @@ removeCapturedPiece(State, C, L, NewState):-
     setAt(C, Line, EmptyCell ,OldLine),
     setAt(L, State,OldLine,NewState).
 
-playRound(State,Player):-
-
+playRound(State):-
     printRound(State),
-    getPlayerMove(State,Player,Move),
+    getPlayerMove(State,Move),
     notationToInts(Move,ConvertedMove),
-    playMove(State,Player,ConvertedMove,NewState),
+    playMove(State,ConvertedMove,[NewBoard,Player|Rest]),
     nextPlayer(Player,NextPlayer),
-    playRound(NewState,NextPlayer).
+    playRound([NewBoard,NextPlayer|Rest]).
 
-
+% Refazer esta funcão
 increment_captured_pieces(Player):-
     retract(piecesCaptured(Player, PlayerPieces)),
     assertz(piecesCaptured(Player, PlayerPieces + 1)).
     
+% Refazer esta funcao
 decrement_hand_pieces(Player):-
     retract(piecesInHand(Player, PlayerPieces)),
     assertz(piecesInHand(Player, PlayerPieces - 1)).
