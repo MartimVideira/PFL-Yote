@@ -42,13 +42,8 @@ initialState([Board,player1,[12,0],[12,0]]):-
     myRepeat(Columns,NumberLines,Board).
 
 getCell(Board,Column,Line,Cell):-
-    notationToInts([Column,Line],[ColumnNumber,LineNumber]),
     at(LineNumber,Board,BoardLine),
     at(ColumnNumber,BoardLine,Cell).
-
-getCellInts([Board|_Rest],Column,Line,Cell):-
-    at(Line,Board,BoardLine),
-    at(Column,BoardLine,Cell).
 
 % Board Printing Rules
 printLine([]):-
@@ -104,17 +99,18 @@ validPosition(C,L):-
 isValidMove([Board|_],[C,L]):-
     validPosition(C,L),
     piece(emptyCell,EmptyCell),
-    getCell(Board,C,L,EmptyCell),!.
+    notationToInts(C,L,CC,LC),
+    getCell(Board,CC,LC,EmptyCell),!.
 
 % Moving A Pice Inside The Board
 isValidMove([Board,Player|_],[Ci,Li,Cf,Lf]):-
     validPosition(Ci,Li),
     validPosition(Cf,Lf),
-    piece(Player,PlayerPiece),
-    getCell(Board,Ci,Li,PlayerPiece),
-    piece(emptyCell,EmptyCell),
-    getCell(Board,Cf,Lf,EmptyCell),
     notationToInts([Ci,Li,Cf,Lf],[CCi,LCi,CCf,LCf]),
+    piece(Player,PlayerPiece),
+    getCell(Board,CCi,LCi,PlayerPiece),
+    piece(emptyCell,EmptyCell),
+    getCell(Board,CCf,LCf,EmptyCell),
     (verticalMove(CCi,LCi,CCf,LCf);
      horizontalMove(CCi,LCi,CCf,LCf);
      captureHorizontal(Board,Player, CCi,LCi,CCf,LCf); 
@@ -125,7 +121,7 @@ captureHorizontal(Board,Player,Ci, Li, Cf, Li):-
         piece(emptyCell,EmptyCell),
         piece(Player,PlayerPiece),
         Ci is Cf - 2, 
-        getCellInts(Board,Cf-1,Li,SelectedCell),
+        getCell(Board,Cf-1,Li,SelectedCell),
         PlayerPiece \= SelectedCell,
         SelectedCell \= EmptyCell
     );
@@ -134,24 +130,24 @@ captureHorizontal(Board,Player,Ci, Li, Cf, Li):-
         piece(emptyCell,EmptyCell),
         piece(Player,PlayerPiece),
         Ci is Cf + 2, 
-        getCellInts(Board,Cf+1,Li,SelectedCell), 
+        getCell(Board,Cf+1,Li,SelectedCell), 
         PlayerPiece \= SelectedCell, 
         SelectedCell \= EmptyCell
     ).
 
-captureVertical([Board,Player|_],Ci, Li, Ci, Lf):-
+captureVertical(Board,Player,Ci, Li, Ci, Lf):-
     (
         piece(Player,PlayerPiece),
         piece(emptyCell,EmptyCell),
         Li is Lf - 2,  
-        getcellints(Board,Ci,Lf - 1,SelectedCell),
+        getCell(Board,Ci,Lf - 1,SelectedCell),
         PlayerPiece \= SelectedCell, SelectedCell\= EmptyCell
     );
     (
         piece(Player,PlayerPiece),
         piece(emptyCell,EmptyCell),
         Li is Lf + 2,
-        getCellInts(Board,Ci,Lf + 1,SelectedCell),
+        getCell(Board,Ci,Lf + 1,SelectedCell),
         PlayerPiece \= SelectedCell, SelectedCell\= EmptyCell
     ).
 
