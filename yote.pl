@@ -1,7 +1,5 @@
 ?- set_prolog_flag(double_quotes,chars).
 :- consult('utils.pl').
-:- dynamic(piecesInHand/2).
-:- dynamic(piecesCaptured/2).
 
 % Game Variables/Rules
 numberColumns(6).
@@ -73,15 +71,17 @@ printLines([Line|Board],RowNumber):-
     RowsLeft is RowNumber -1,
     printLines(Board,RowsLeft).
 
-printRound([Board,_Player,[Player1Pieces,_],[Player2Pieces,_]]):-
+printRound([Board,_Player,[Player1Pieces,Player1Captured],[Player2Pieces,Player2Captured]]):-
     % Possibly Initialize Pieces
     piece(player1,Player1Piece),
     piece(player2,Player2Piece),
-    write('Player1\'s Hand'),nl,
-    format('~d ->',[Player1Pieces]),printN(Player1Pieces,Player1Piece),nl,
+    write('Player1'),nl,
+    format('Hand ~d ->',[Player1Pieces]),printN(Player1Pieces,Player1Piece),nl,
+    format('Captured ~d ->',[Player2Captured]),printN(Player2Captured,Player2Piece),nl,
     printBoard(Board),nl,
-    write('Player2\'s Hand'),nl,
-    format('~d ->',[Player2Pieces]),printN(Player2Pieces,Player2Piece),nl,nl.
+    write('Player2'),nl,
+    format('Hand ~d ->',[Player2Pieces]),printN(Player2Pieces,Player2Piece),nl,
+    format('Captured ~d ->',[Player1Captured]),printN(Player1Captured,Player1Piece),nl,nl.
 
 validPosition(C,L):-
     char_code(L,LCode),
@@ -167,30 +167,32 @@ whyNotValid(_State,[C,L]):-
 whyNotValid([Board|_],[C,L]):-
     notationToInts([C,L],[CC,LC]),
     getCell(Board,CC,LC,Cell),
-    write('Cell In This Position Is:'),write(Cell),nl.
+    write('Cell In This Position Is:'),write(Cell),nl,!.
 whyNotValid(_State,[Ci,Li,Cf,Lf]):-
     (\+validPosition(Ci,Li);
     \+validPosition(Cf,Lf)),
-    write('That Is Not A Valid Position\n').
+    write('That Is Not A Valid Position\n'),!.
 whyNotValid([Board,Player|_],Move):-
     notationToInts(Move,[Ci,Li,Cf,Lf]),
     \+ (verticalMove(Ci,Li,Cf,Lf);
         horizontalMove(Ci,Li,Cf,Lf);
         captureHorizontal(Board, Player, Ci,Li,Cf,Lf); 
         captureVertical(Board, Player, Ci,Li,Cf,Lf)),
-    write('That Move Is Not Orthogonal\n').
+    write('That Move Is Not Orthogonal\n'),!.
 whyNotValid([Board,Player|_],Move):-
     piece(Player,PlayerPiece),
     notationToInts(Move,[Ci,Li|_]),
     getCell(Board,Ci,Li,SelectedCell),
     PlayerPiece \= SelectedCell,
-    write('Selected Cell Is Not '),write(Player),write('\'s Piece\n').
+    write('Selected Cell Is Not '),write(Player),write('\'s Piece\n'),!.
 whyNotValid([Board|_],Move):-
     piece(emptyCell,EmptyCell),
     notationToInts(Move,[_,_,Cf,Lf]),
     getCell(Board,Cf,Lf,SelectedCell),
     SelectedCell \= EmptyCell,
-    write('Moving Into Another Players Piece!\n').
+    write('Moving Into Another Players Piece!\n'),!.
+whyNotValid(_,_):-
+    write('This Reason Is Not Being Checked').
 
 validatePlayerMove(State,Move):-
     isValidMove(State,Move),!.
@@ -222,23 +224,26 @@ playMove([Board,Player|Rest],[Ci,Li,Cf,Lf],FinalState):-
     setAt(Lf,PartialBoard,NewFinalLine,FinalBoard),
     removePieces([FinalBoard,Player|Rest], [Ci, Li, Cf, Lf],FinalState).
 
+removePieces(State,[Ci,Li,Cf,_Lf], NewState):-
+    Ci is Cf - 2,
+    removeCapturedPiece(State, Cf - 1, Li,NewState).
+removePieces(State,[Ci,Li,Cf,_Lf], NewState):-
+    Ci is Cf + 2,
+    removeCapturedPiece(State, Cf + 1, Li,NewState).
+removePieces(State,[_Ci,Li,Cf,Lf], NewState):-
+    Li is Lf - 2,
+    removeCapturedPiece(State, Cf, Lf - 1,NewState).
+removePieces(State,[_Ci,Li,Cf,Lf], NewState):-
+    Li is Lf + 2,
+    removeCapturedPiece(State, Cf, Lf + 1,NewState).
+removePieces(State,_,State).
 
-% Refazer esta funcao
-removePieces(State,[Ci,Li,Cf,Lf], NewState):-
-    (((Ci is Cf - 2, removeCapturedPiece(State, Cf - 1, Li,PartialState));
-    (Ci is Cf + 2, removeCapturedPiece(State, Cf + 1, Li,PartialState));
-    (Li is Lf - 2, removeCapturedPiece(State, Cf, Lf - 1,PartialState));
-    (Li is Lf + 2, removeCapturedPiece(State, Cf, Lf + 1,PartialState))), increment_captured_pieces(State,NewState));
-
-    ( at(Li,State,Line),
-    setAt(Li, State,Line,NewState),
-    true).
-
-removeCapturedPiece(State, C, L, NewState):-
-    at(L,State,Line),
+removeCapturedPiece([Board|Rest], C, L,NewState):-
+    at(L,Board,Line),
     piece(emptyCell,EmptyCell),
     setAt(C, Line, EmptyCell ,OldLine),
-    setAt(L, State,OldLine,NewState).
+    setAt(L,Board,OldLine,NewBoard),
+    increment_captured_pieces([NewBoard|Rest],NewState).
 
 playRound(State):-
     printRound(State),
