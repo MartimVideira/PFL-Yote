@@ -10,15 +10,18 @@ piece(emptyCell,' ').
 piece(player1,'O').
 piece(player2,'X').
 
-piecesInHand(player1,12).
-piecesInHand(player2,12).
-piecesCaptured(player1,0).
-piecesCaptured(player2,0).
-piecesInPlay(player1,0).
-piecesInPlay(player2,0).
-
 nextPlayer(player1,player2).
 nextPlayer(player2,player1).
+
+% Nice Api To interact With The Game State
+getPlayer([_,Player|_],Player).
+setPlayer([Board,_|Rest],Player,[Board,Player|Rest]).
+getBoard([Board|_],Board).
+setBoard([_|Rest],Board,[Board|Rest]).
+getPlayerPieces([_,player1,Pieces,_],Pieces).
+getPlayerPieces([_,player2,_,Pieces],Pieces).
+setPlayerPieces([Board,player1,_,Pieces2],Pieces,[Board,player1,Pieces,Pieces2]).
+setPlayerPieces([Board,player2,Pieces1,_],Pieces,[Board,player1,Pieces1,Pieces]).
 
 notationToInts([Column,Line],[ColumnNumber,LineNumber]):-
     char_code(Column,ColumnCode),
@@ -176,7 +179,7 @@ playMove([Board,Player|Rest],[C,L],NewState):-
     piece(Player,PlayerPiece),
     setAt(C,Line,PlayerPiece,NewLine),
     setAt(L,Board,NewLine,NewBoard),
-    decrement_hand_pieces([NewBoard,Player|Rest],Player,NewState).
+    decrement_hand_pieces([NewBoard,Player|Rest],NewState).
 playMove([Board,Player|Rest],[Ci,Li,Cf,Lf],FinalState):-
     at(Li,Board,Line),
     piece(Player,PlayerPiece),
@@ -220,7 +223,10 @@ increment_captured_pieces(Player):-
     retract(piecesCaptured(Player, PlayerPieces)),
     assertz(piecesCaptured(Player, PlayerPieces + 1)).
     
+
 % Refazer esta funcao
-decrement_hand_pieces(Player):-
-    retract(piecesInHand(Player, PlayerPieces)),
-    assertz(piecesInHand(Player, PlayerPieces - 1)).
+decrement_hand_pieces(State,NewState):-
+    getPlayerPieces(State,[InHand,Captured]),
+    NewInHand is InHand - 1,
+    setPlayerPieces(State,[NewInHand,Captured],NewState).
+
