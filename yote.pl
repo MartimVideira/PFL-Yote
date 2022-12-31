@@ -42,8 +42,8 @@ initialState([Board,player1,[12,0],[12,0]]):-
     myRepeat(Columns,NumberLines,Board).
 
 getCell(Board,Column,Line,Cell):-
-    at(LineNumber,Board,BoardLine),
-    at(ColumnNumber,BoardLine,Cell).
+    at(Line,Board,BoardLine),
+    at(Column,BoardLine,Cell).
 
 % Board Printing Rules
 printLine([]):-
@@ -99,7 +99,7 @@ validPosition(C,L):-
 isValidMove([Board|_],[C,L]):-
     validPosition(C,L),
     piece(emptyCell,EmptyCell),
-    notationToInts(C,L,CC,LC),
+    notationToInts([C,L],[CC,LC]),
     getCell(Board,CC,LC,EmptyCell),!.
 
 % Moving A Pice Inside The Board
@@ -165,7 +165,8 @@ whyNotValid(_State,[C,L]):-
     \+ validPosition(C,L),!,
     write('That Is Not A Valid Position\n').
 whyNotValid([Board|_],[C,L]):-
-    getCell(Board,C,L,Cell),
+    notationToInts([C,L],[CC,LC]),
+    getCell(Board,CC,LC,Cell),
     write('Cell In This Position Is:'),write(Cell),nl.
 whyNotValid(_State,[Ci,Li,Cf,Lf]):-
     (\+validPosition(Ci,Li);
@@ -178,11 +179,18 @@ whyNotValid([Board,Player|_],Move):-
         captureHorizontal(Board, Player, Ci,Li,Cf,Lf); 
         captureVertical(Board, Player, Ci,Li,Cf,Lf)),
     write('That Move Is Not Orthogonal\n').
-whyNotValid([Board,Player|_],[Ci,Li,_Cf,_Lf]):-
+whyNotValid([Board,Player|_],Move):-
     piece(Player,PlayerPiece),
+    notationToInts(Move,[Ci,Li|_]),
     getCell(Board,Ci,Li,SelectedCell),
     PlayerPiece \= SelectedCell,
     write('Selected Cell Is Not '),write(Player),write('\'s Piece\n').
+whyNotValid([Board|_],Move):-
+    piece(emptyCell,EmptyCell),
+    notationToInts(Move,[_,_,Cf,Lf]),
+    getCell(Board,Cf,Lf,SelectedCell),
+    SelectedCell \= EmptyCell,
+    write('Moving Into Another Players Piece!\n').
 
 validatePlayerMove(State,Move):-
     isValidMove(State,Move),!.
@@ -233,20 +241,15 @@ removeCapturedPiece(State, C, L, NewState):-
     setAt(L, State,OldLine,NewState).
 
 playRound(State):-
-    getPlayer(State,PlayerThis),
-    write('No inicio o Jogador é'),write(PlayerThis),nl,nl,
     printRound(State),
     getPlayerMove(State,Move),
     notationToInts(Move,ConvertedMove),
     playMove(State,ConvertedMove,[NewBoard,Player|Rest]),
-    write('THis player is '),write(Player),nl,
     nextPlayer(Player,NextPlayer),
-    write('After switching'),write(NextPlayer),nl,
     playRound([NewBoard,NextPlayer|Rest]).
 
 % Refazer esta funcão
 increment_captured_pieces([Board,Player|Rest],NewState):-
-    write('\n\n\n\nFui Chamada\n\n\n\n'),
     nextPlayer(Player,NextPlayer),
     getPlayerPieces([Board,NextPlayer|Rest],[InHand,Captured]),
     NewCaptured is Captured + 1,
