@@ -1,13 +1,15 @@
 ?- set_prolog_flag(double_quotes,chars).
 :- consult('utils.pl').
 
-% Game Variables/Rules
+% Game Variables For More Flexibility
 numberColumns(6).
 numberLines(5).
+numberPieces(2).
 piece(emptyCell,' ').
 piece(player1,'O').
 piece(player2,'X').
 
+% Nice Rule
 nextPlayer(player1,player2).
 nextPlayer(player2,player1).
 
@@ -32,7 +34,8 @@ notationToInts([Ci,Li,Cf,Lf],[CCi,LCi,CCf,LCf]):-
     notationToInts([Ci,Li],[CCi,LCi]),
     notationToInts([Cf,Lf],[CCf,LCf]),!.
 
-initialState([Board,player1,[12,0],[12,0]]):- 
+initialState([Board,player1,[N,0],[N,0]]):- 
+    numberPieces(N),
     piece(emptyCell,EmptyCell), 
     numberColumns(NumberColumns),
     numberLines(NumberLines),
@@ -245,13 +248,18 @@ removeCapturedPiece([Board|Rest], C, L,NewState):-
     setAt(L,Board,OldLine,NewBoard),
     increment_captured_pieces([NewBoard|Rest],NewState).
 
+
+playRound(State):-
+    checkWinCondition(State,Winner),!,
+    write('Player '),write(Winner),write(' won the Game!').
+
 playRound(State):-
     printRound(State),
     getPlayerMove(State,Move),
     notationToInts(Move,ConvertedMove),
-    playMove(State,ConvertedMove,[NewBoard,Player|Rest]),
+    playMove(State,ConvertedMove,[NewBoard,Player|Rest]),!,
     nextPlayer(Player,NextPlayer),
-    playRound([NewBoard,NextPlayer|Rest]).
+    playRound([NewBoard,NextPlayer|Rest]),!.
 
 % Refazer esta funcão
 increment_captured_pieces([Board,Player|Rest],NewState):-
@@ -267,3 +275,13 @@ decrement_hand_pieces(State,NewState):-
     NewInHand is InHand - 1,
     setPlayerPieces(State,[NewInHand,Captured],NewState).
 
+checkWinCondition([Board,_|Rest],player2):-
+    numberPieces(N),
+    getPlayerPieces([Board,player1|Rest],[_,N]).
+checkWinCondition([Board,_|Rest],player1):-
+    numberPieces(N),
+    getPlayerPieces([Board,player2|Rest],[_,N]).
+
+playGame:-
+    initialState(S),
+    playRound(S).
