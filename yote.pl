@@ -21,7 +21,7 @@ setBoard([_|Rest],Board,[Board|Rest]).
 getPlayerPieces([_,player1,Pieces,_],Pieces).
 getPlayerPieces([_,player2,_,Pieces],Pieces).
 setPlayerPieces([Board,player1,_,Pieces2],Pieces,[Board,player1,Pieces,Pieces2]).
-setPlayerPieces([Board,player2,Pieces1,_],Pieces,[Board,player1,Pieces1,Pieces]).
+setPlayerPieces([Board,player2,Pieces1,_],Pieces,[Board,player2,Pieces1,Pieces]).
 
 notationToInts([Column,Line],[ColumnNumber,LineNumber]):-
     char_code(Column,ColumnCode),
@@ -120,13 +120,40 @@ isValidMove([Board,Player|_],[Ci,Li,Cf,Lf]):-
      captureHorizontal(Board,Player, CCi,LCi,CCf,LCf); 
      captureVertical(Board,Player, CCi,LCi,CCf,LCf)).
 
-captureHorizontal([Board,Player|_],Ci, Li, Cf, Li):-
-    (Ci is Cf - 2, piece(Player,PlayerPiece), getCellInts(Board,Cf-1,Li,SelectedCell), PlayerPiece \= SelectedCell, SelectedCell \= ' ');
-    (Ci is Cf + 2, piece(Player,PlayerPiece), getCellInts(Board,Cf+1,Li,SelectedCell),  PlayerPiece \= SelectedCell, SelectedCell \= ' ').
+captureHorizontal(Board,Player,Ci, Li, Cf, Li):-
+    (
+        piece(emptyCell,EmptyCell),
+        piece(Player,PlayerPiece),
+        Ci is Cf - 2, 
+        getCellInts(Board,Cf-1,Li,SelectedCell),
+        PlayerPiece \= SelectedCell,
+        SelectedCell \= EmptyCell
+    );
+
+    (
+        piece(emptyCell,EmptyCell),
+        piece(Player,PlayerPiece),
+        Ci is Cf + 2, 
+        getCellInts(Board,Cf+1,Li,SelectedCell), 
+        PlayerPiece \= SelectedCell, 
+        SelectedCell \= EmptyCell
+    ).
 
 captureVertical([Board,Player|_],Ci, Li, Ci, Lf):-
-    (Li is Lf - 2, piece(Player,PlayerPiece), getCellInts(Board,Ci,Lf - 1,SelectedCell), PlayerPiece \= SelectedCell, SelectedCell \= ' ');
-    (Li is Lf + 2, piece(Player,PlayerPiece), getCellInts(Board,Ci,Lf + 1,SelectedCell), PlayerPiece \= SelectedCell, SelectedCell \= ' ').
+    (
+        piece(Player,PlayerPiece),
+        piece(emptyCell,EmptyCell),
+        Li is Lf - 2,  
+        getcellints(Board,Ci,Lf - 1,SelectedCell),
+        PlayerPiece \= SelectedCell, SelectedCell\= EmptyCell
+    );
+    (
+        piece(Player,PlayerPiece),
+        piece(emptyCell,EmptyCell),
+        Li is Lf + 2,
+        getCellInts(Board,Ci,Lf + 1,SelectedCell),
+        PlayerPiece \= SelectedCell, SelectedCell\= EmptyCell
+    ).
 
 
 verticalMove(Ci,Li,Ci,Lf):-
@@ -210,15 +237,20 @@ removeCapturedPiece(State, C, L, NewState):-
     setAt(L, State,OldLine,NewState).
 
 playRound(State):-
+    getPlayer(State,PlayerThis),
+    write('No inicio o Jogador é'),write(PlayerThis),nl,nl,
     printRound(State),
     getPlayerMove(State,Move),
     notationToInts(Move,ConvertedMove),
     playMove(State,ConvertedMove,[NewBoard,Player|Rest]),
+    write('THis player is '),write(Player),nl,
     nextPlayer(Player,NextPlayer),
+    write('After switching'),write(NextPlayer),nl,
     playRound([NewBoard,NextPlayer|Rest]).
 
 % Refazer esta funcão
 increment_captured_pieces([Board,Player|Rest],NewState):-
+    write('\n\n\n\nFui Chamada\n\n\n\n'),
     nextPlayer(Player,NextPlayer),
     getPlayerPieces([Board,NextPlayer|Rest],[InHand,Captured]),
     NewCaptured is Captured + 1,
