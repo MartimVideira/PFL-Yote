@@ -83,10 +83,10 @@ printRound([Board,_Player,[Player1Pieces,_],[Player2Pieces,_]]):-
     piece(player1,Player1Piece),
     piece(player2,Player2Piece),
     write('Player1\'s Hand'),nl,
-    write('->'),printN(Player1Pieces,Player1Piece),nl,
+    format('~d ->',[Player1Pieces]),printN(Player1Pieces,Player1Piece),nl,
     printBoard(Board),nl,
     write('Player2\'s Hand'),nl,
-    write('->'),printN(Player2Pieces,Player2Piece),nl,nl.
+    format('~d ->',[Player2Pieces]),printN(Player2Pieces,Player2Piece),nl,nl.
 
 validPosition(C,L):-
     char_code(L,LCode),
@@ -193,18 +193,17 @@ playMove([Board,Player|Rest],[Ci,Li,Cf,Lf],FinalState):-
 
 
 % Refazer esta funcao
-removePieces(Player, State,[Ci,Li,Cf,Lf], NewState):-
-    (((Ci is Cf - 2, removeCapturedPiece(State, Cf - 1, Li, NewState));
-    (Ci is Cf + 2, removeCapturedPiece(State, Cf + 1, Li, NewState));
-    (Li is Lf - 2, removeCapturedPiece(State, Cf, Lf - 1, NewState));
-    (Li is Lf + 2, removeCapturedPiece(State, Cf, Lf + 1, NewState))), increment_captured_pieces(Player));
+removePieces(State,[Ci,Li,Cf,Lf], NewState):-
+    (((Ci is Cf - 2, removeCapturedPiece(State, Cf - 1, Li,PartialState));
+    (Ci is Cf + 2, removeCapturedPiece(State, Cf + 1, Li,PartialState));
+    (Li is Lf - 2, removeCapturedPiece(State, Cf, Lf - 1,PartialState));
+    (Li is Lf + 2, removeCapturedPiece(State, Cf, Lf + 1,PartialState))), increment_captured_pieces(State,NewState));
 
     ( at(Li,State,Line),
     setAt(Li, State,Line,NewState),
     true).
 
 removeCapturedPiece(State, C, L, NewState):-
-
     at(L,State,Line),
     piece(emptyCell,EmptyCell),
     setAt(C, Line, EmptyCell ,OldLine),
@@ -219,10 +218,12 @@ playRound(State):-
     playRound([NewBoard,NextPlayer|Rest]).
 
 % Refazer esta funcão
-increment_captured_pieces(Player):-
-    retract(piecesCaptured(Player, PlayerPieces)),
-    assertz(piecesCaptured(Player, PlayerPieces + 1)).
-    
+increment_captured_pieces([Board,Player|Rest],NewState):-
+    nextPlayer(Player,NextPlayer),
+    getPlayerPieces([Board,NextPlayer|Rest],[InHand,Captured]),
+    NewCaptured is Captured + 1,
+    setPlayerPieces([Board,NextPlayer|Rest],[InHand,NewCaptured],PartialState),
+    setPlayer(PartialState,Player,NewState).
 
 % Refazer esta funcao
 decrement_hand_pieces(State,NewState):-
