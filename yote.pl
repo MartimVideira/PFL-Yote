@@ -1,28 +1,7 @@
 ?- set_prolog_flag(double_quotes,chars).
+?- set_prolog_flag(answer_write_options,[max_depth(0)]).
 :- consult('utils.pl').
 :- use_module(library(clpfd)).
-
-
-%merge two lists
-
-m2([A|As], [B|Bs], [A,B|Rs]) :-
-    !, m2(As, Bs, Rs).
-m2([], Bs, Bs) :- !.
-m2(As, [], As).
-
-evaluate_board([Board, player2|Rest], player2, Score):-
-    getPlayerPieces([Board,player2|Rest], [P2,N2]),
-    getPlayerPieces([Board,player1|Rest], [P1,N1]),
-    Score = P2,
-    write(Score).
-
-evaluate_board([Board, player1|Rest], player1, Score):-
-    getPlayerPieces([Board,player2|Rest], [_,N]),
-    getPlayerPieces([Board,player1|Rest], [_,M]),
-    Score = 10 * M - (10 * N).
-
-
-
 
 
 % Game Variables For More Flexibility
@@ -46,6 +25,47 @@ getPlayerPieces([_,player1,Pieces,_],Pieces).
 getPlayerPieces([_,player2,_,Pieces],Pieces).
 setPlayerPieces([Board,player1,_,Pieces2],Pieces,[Board,player1,Pieces,Pieces2]).
 setPlayerPieces([Board,player2,Pieces1,_],Pieces,[Board,player2,Pieces1,Pieces]).
+
+increment_captured_pieces([Board,Player|Rest],NewState):-
+    nextPlayer(Player,NextPlayer),
+    getPlayerPieces([Board,NextPlayer|Rest],[InHand,Captured]),
+    NewCaptured is Captured + 1,
+    setPlayerPieces([Board,NextPlayer|Rest],[InHand,NewCaptured],PartialState),
+    setPlayer(PartialState,Player,NewState).
+
+decrement_hand_pieces(State,NewState):-
+    getPlayerPieces(State,[InHand,Captured]),
+    NewInHand is InHand - 1,
+    setPlayerPieces(State,[NewInHand,Captured],NewState).
+
+checkWinCondition([Board,_|Rest],player2):-
+    numberPieces(N),
+    getPlayerPieces([Board,player2|Rest],[_,N]).
+    
+checkWinCondition([Board,_|Rest],player1):-
+    numberPieces(N),
+    getPlayerPieces([Board,player1|Rest],[_,N]).
+
+removePieces(State,[Ci,Li,Cf,_Lf], NewState):-
+    Ci is Cf - 2,
+    removeCapturedPiece(State, Cf - 1, Li,NewState).
+removePieces(State,[Ci,Li,Cf,_Lf], NewState):-
+    Ci is Cf + 2,
+    removeCapturedPiece(State, Cf + 1, Li,NewState).
+removePieces(State,[_Ci,Li,Cf,Lf], NewState):-
+    Li is Lf - 2,
+    removeCapturedPiece(State, Cf, Lf - 1,NewState).
+removePieces(State,[_Ci,Li,Cf,Lf], NewState):-
+    Li is Lf + 2,
+    removeCapturedPiece(State, Cf, Lf + 1,NewState).
+removePieces(State,_,State).
+
+removeCapturedPiece([Board|Rest], C, L,NewState):-
+    at(L,Board,Line),
+    piece(emptyCell,EmptyCell),
+    setAt(C, Line, EmptyCell ,OldLine),
+    setAt(L,Board,OldLine,NewBoard),
+    increment_captured_pieces([NewBoard|Rest],NewState).
 
 notationToInts([Column,Line],[ColumnNumber,LineNumber]):-
     
@@ -127,7 +147,10 @@ validPosition(C,L):-
     CCode >= ACode,!.
 
 % Moving A Piece Into The Board
-isValidMove([Board|_],[C,L]):-
+isValidMove(State,[C,L]):-
+    getPlayerPieces(State,[PiecesInHand,_]),
+    PiecesInHand > 0,
+    getBoard(State,Board),
     validPosition(C,L),
     piece(emptyCell,EmptyCell),
     notationToInts([C,L],[CC,LC]),
@@ -195,6 +218,10 @@ horizontalMove(Ci,Li,Cf,Li):-
 whyNotValid(_State,[C,L]):-
     \+ validPosition(C,L),!,
     write('That Is Not A Valid Position\n').
+whyNotValid(State,[_C,_L]):-
+    getPlayerPieces(State,[PiecesInHand,_]),
+    PiecesInHand =< 0,
+    write('You dont\'t have any more pieces in hand').
 whyNotValid([Board|_],[C,L]):-
     notationToInts([C,L],[CC,LC]),
     getCell(Board,CC,LC,Cell),
@@ -231,6 +258,7 @@ validatePlayerMove(State,Move):-
     write('[INVALID MOVE] '),
     whyNotValid(State,Move),fail.
 
+
 getPlayerMove([Board,Player|Rest],Move):-
     write(Player),write(' Next Move:'),
     read(AtomMove),
@@ -239,8 +267,6 @@ getPlayerMove([Board,Player|Rest],Move):-
 getPlayerMove(State,Move):- getPlayerMove(State,Move).
 
 playMove([Board,Player|Rest],[C,L],NewState):-
-    getPlayerPieces([Board,Player|Rest], [N, _]),
-    N > 0,
     at(L,Board,Line),
     piece(Player,PlayerPiece),
     setAt(C,Line,PlayerPiece,NewLine),
@@ -280,28 +306,36 @@ removeCapturedPiece([Board|Rest], C, L,NewState):-
     increment_captured_pieces([NewBoard|Rest],NewState).
 
 
-playRound(State):-
-    checkWinCondition(State,Winner),!,
-    write('Player '),write(Winner),write(' won the Game!').
+
+getValidMoves(State, Moves):-
+
+    getValidMoves2(State, Moves2),
+    getValidMoves1(State, Moves1),
+    myConcat(Moves1, Moves2, Moves).
 
 
-getValidMoves(State, Moves):- 
+getValidMoves1(State, Moves):- 
     setof([Ci, Li, Cf, Lf], (Notation, State)^
 (   between(0, 5, Ci),
     between(0, 4, Li),
     between(0, 5, Cf),
     between(0, 4, Lf),
     notationToInts(Notation, [Ci, Li, Cf, Lf]),
-    isValidMove(State, Notation)), Moves).
+    isValidMove(State, Notation)), Moves) ; Moves = [].
 
-getValidMoves(State, Moves):- 
+
+getValidMoves2(State, Moves):- 
         setof([C, L], (Notation, State)^
 (   between(0, 5, C),
     between(0, 4, L),
     notationToInts(Notation, [C, L]),
     isValidMove(State, Notation)),
-    Moves).
+    Moves); Moves =[].
 
+
+playRound(State):-
+    checkWinCondition(State,Winner),!,
+    write('Player '),write(Winner),write(' won the Game!').
 
 playRound(State):-
     printRound(State),
@@ -311,92 +345,72 @@ playRound(State):-
     nextPlayer(Player,NextPlayer),
     playRound([NewBoard,NextPlayer|Rest]),!.
 
+greedyChoice([Board ,player2|Rest], Move, player2, Moves) :-
 
-playRoundAI([Board, Player|Rest]):-
-    checkWinCondition([Board, Player|Rest],Winner),!,
-    write('Player '),write(Winner),write(' won the Game!').
+    setof(Score-Mv, NewGameState^Moves^(
+        member(Mv, Moves), 
+        playMove([Board ,player2|Rest], Mv, NewGameState),
+        evaluate_board(NewGameState, player2,  Score)),
+        [Score-Move | _]).
 
-
-playRoundAI([Board, player2|Rest]):-
-
-    getValidMoves([Board ,player2|Rest], Moves),
-    random_member(MoveAI, Moves),
-    write(MoveAI),
-    playMove([Board,player2|Rest],MoveAI,[NewBoard,player2|NewRest]),!,
-    playRoundAI([NewBoard,player1|NewRest]),!.
-
-
-
-
-
-playRoundAI([Board, player1|Rest]):-
-    printRound([Board, player1|Rest]),
-    getPlayerMove([Board, player1|Rest],Move),
-    notationToInts(Move,ConvertedMove),
-    playMove([Board, player1|Rest],ConvertedMove,[NewBoard,player1|NewRest]),!,
-    playRoundSmartAI([NewBoard,player2|NewRest]),!.
-
-
-playRoundSmartAI([Board, player2|Rest]):-
-    getValidMoves([Board, player2|Rest], Moves),
-    smartChoice([Board ,player2|Rest], MoveAI, player2, Moves),
-    write(MoveAI),
-    playMove([Board,player2|Rest],MoveAI,[NewBoard,player2|NewRest]),!,
-    playRoundAI([NewBoard,player1|NewRest]),!.
-
-
-smartChoice([Board ,player2|Rest], [Ci, Li, Cf, Lf], player2, Moves) :-
-        write(Moves),
-        setof(Score-[CCi, LCi, CCf, LCf],
-        NewGameState^Moves^(
-            nl,nl,nl,
-        write(Moves),nl,nl,nl,
-        write(nl),
-        write(nl),
-        member([CCi, LCi, CCf, LCf], Moves), 
-        playMove([Board ,player2|Rest], [CCi, LCi, CCf, LCf], NewGameState),
-        evaluate_board(NewGameState, player2,  Score)),  [Score-[Ci, Li, Cf, Lf] | _]).
-
-smartChoice([Board ,player2|Rest], [C, L], player2, Moves) :-
-        write('kkkkkk'),
-        setof(Score-[CC, LC],   
-        NewGameState^Moves^(
-        nl,nl,nl,
-        write(Moves),nl,nl,nl,
-        write(nl),
-        write(nl),
-        member([CC, LC], Moves), 
-        write([CC, LC]),
-        playMove([Board ,player2|Rest], [CC, LC], NewGameState),
-        write('hola'),
-        evaluate_board(NewGameState, player2,  Score)),  [Score-[C,L] | _]).
-
-% Refazer esta funcão
-increment_captured_pieces([Board,Player|Rest],NewState):-
-    nextPlayer(Player,NextPlayer),
-    getPlayerPieces([Board,NextPlayer|Rest],[InHand,Captured]),
-    NewCaptured is Captured + 1,
-    setPlayerPieces([Board,NextPlayer|Rest],[InHand,NewCaptured],PartialState),
-    setPlayer(PartialState,Player,NewState).
-
-% Refazer esta funcao
-decrement_hand_pieces(State,NewState):-
-    getPlayerPieces(State,[InHand,Captured]),
-    NewInHand is InHand - 1,
-    setPlayerPieces(State,[NewInHand,Captured],NewState).
-
-checkWinCondition([Board,_|Rest],player2):-
-    numberPieces(N),
-    getPlayerPieces([Board,player2|Rest],[_,N]).
-    
-checkWinCondition([Board,_|Rest],player1):-
-    numberPieces(N),
-    getPlayerPieces([Board,player1|Rest],[_,N]).
 
 playGame:-
     initialState(S),
     playRound(S).
 
+
+playDumbAI:-
+    initialState(S),
+    playRoundDumbAI(S).
+
+playDumbAI(State):-
+    checkWinCondition(State,Winner),!,
+    write('Player '),write(Winner),write(' won the Game!').
+    
+playRoundDumbAI([Board, player2|Rest]):-
+
+    getValidMoves([Board ,player2|Rest], Moves),
+    random_member(MoveAI, Moves),
+    write(MoveAI),
+    playMove([Board,player2|Rest],MoveAI,[NewBoard,player2|NewRest]),!,
+    playRoundDumbAI([NewBoard,player1|NewRest]).
+
+playRoundDumbAI([Board,player1|Rest]):-
+    playRoundHuman([Board,player1|Rest],[NewBoard,player1|NewRest]),!,
+    write('Played Human Move'),
+    playRoundDumbAI([NewBoard,player2|NewRest]).
+
+playRoundHuman([Board, player1|Rest],NewState):-
+    printRound([Board, player1|Rest]),
+    getPlayerMove([Board, player1|Rest],Move),
+    notationToInts(Move,ConvertedMove),
+    playMove([Board, player1|Rest],ConvertedMove,NewState).
+
 playAI:-
-    initialState([Board, player1|Rest]),
-    playRoundAI([Board, player1|Rest]).
+    initialState(State),
+    playRoundAI(State).
+
+playRoundAI(State):-
+    checkWinCondition(State,Winner),!,
+    write('Player '),write(Winner),write(' won the Game!').
+
+playRoundAI([Board, player2|Rest]):-
+    getValidMoves([Board, player2|Rest], Moves),
+    greedyChoice([Board ,player2|Rest], MoveAI, player2, Moves),
+    write(MoveAI),
+    playMove([Board,player2|Rest],MoveAI,[NewBoard,player2|NewRest]),!,
+    playRoundAI([NewBoard,player1|NewRest]).
+
+playRoundAI([Board,player1|Rest]):-
+    playRoundHuman([Board,player1|Rest],[NewBoard,player1|NewRest]),
+    playRoundAI([NewBoard,player2|NewRest]).
+
+evaluate_board([Board, player2|Rest], player2, Score):-
+    getPlayerPieces([Board,player2|Rest], [P2,N2]),
+    getPlayerPieces([Board,player1|Rest], [P1,N1]),
+    Score = P2.
+
+evaluate_board([Board, player1|Rest], player1, Score):-
+    getPlayerPieces([Board,player2|Rest], [_,N]),
+    getPlayerPieces([Board,player1|Rest], [_,M]),
+    Score = 10 * M - (10 * N).

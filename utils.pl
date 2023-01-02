@@ -28,3 +28,7 @@ setAt(0,[_|XS],Y,[Y|XS]):-!.
 setAt(N,[X|XS],Y,[X|ZS]):-
     N1 is N - 1,
     setAt(N1,XS,Y,ZS).
+
+printAll([]).
+printAll([X|XS]):-
+    write(X),nl,printAll(XS).
