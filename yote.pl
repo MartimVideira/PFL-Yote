@@ -26,6 +26,10 @@ getPlayerPieces([_,player2,_,Pieces],Pieces).
 setPlayerPieces([Board,player1,_,Pieces2],Pieces,[Board,player1,Pieces,Pieces2]).
 setPlayerPieces([Board,player2,Pieces1,_],Pieces,[Board,player2,Pieces1,Pieces]).
 
+getCell(Board,Column,Line,Cell):-
+    at(Line,Board,BoardLine),
+    at(Column,BoardLine,Cell).
+
 increment_captured_pieces([Board,Player|Rest],NewState):-
     nextPlayer(Player,NextPlayer),
     getPlayerPieces([Board,NextPlayer|Rest],[InHand,Captured]),
@@ -90,9 +94,6 @@ initialState([Board,player1,[N,0],[N,0]]):-
     myRepeat(EmptyCell,NumberColumns,Columns),
     myRepeat(Columns,NumberLines,Board).
 
-getCell(Board,Column,Line,Cell):-
-    at(Line,Board,BoardLine),
-    at(Column,BoardLine,Cell).
 
 % Board Printing Rules
 printLine([]):-
@@ -170,6 +171,15 @@ isValidMove([Board,Player|_],[Ci,Li,Cf,Lf]):-
      captureHorizontal(Board,Player, CCi,LCi,CCf,LCf); 
      captureVertical(Board,Player, CCi,LCi,CCf,LCf)).
 
+verticalMove(Ci,Li,Ci,Lf):-
+    Li is Lf + 1.
+verticalMove(Ci,Li,Ci,Lf):-
+    Li is Lf - 1.
+horizontalMove(Ci,Li,Cf,Li):-
+    Ci is Cf + 1.
+horizontalMove(Ci,Li,Cf,Li):-
+    Ci is Cf - 1.
+
 captureHorizontal(Board,Player,Ci, Li, Cf, Li):-
     (
         piece(emptyCell,EmptyCell),
@@ -205,15 +215,26 @@ captureVertical(Board,Player,Ci, Li, Ci, Lf):-
         PlayerPiece \= SelectedCell, SelectedCell\= EmptyCell
     ).
 
+removePieces(State,[Ci,Li,Cf,_Lf], NewState):-
+    Ci is Cf - 2,
+    removeCapturedPiece(State, Cf - 1, Li,NewState).
+removePieces(State,[Ci,Li,Cf,_Lf], NewState):-
+    Ci is Cf + 2,
+    removeCapturedPiece(State, Cf + 1, Li,NewState).
+removePieces(State,[_Ci,Li,Cf,Lf], NewState):-
+    Li is Lf - 2,
+    removeCapturedPiece(State, Cf, Lf - 1,NewState).
+removePieces(State,[_Ci,Li,Cf,Lf], NewState):-
+    Li is Lf + 2,
+    removeCapturedPiece(State, Cf, Lf + 1,NewState).
+removePieces(State,_,State).
 
-verticalMove(Ci,Li,Ci,Lf):-
-    Li is Lf + 1.
-verticalMove(Ci,Li,Ci,Lf):-
-    Li is Lf - 1.
-horizontalMove(Ci,Li,Cf,Li):-
-    Ci is Cf + 1.
-horizontalMove(Ci,Li,Cf,Li):-
-    Ci is Cf - 1.
+removeCapturedPiece([Board|Rest], C, L,NewState):-
+    at(L,Board,Line),
+    piece(emptyCell,EmptyCell),
+    setAt(C, Line, EmptyCell ,OldLine),
+    setAt(L,Board,OldLine,NewBoard),
+    increment_captured_pieces([NewBoard|Rest],NewState).
 
 whyNotValid(_State,[C,L]):-
     \+ validPosition(C,L),!,
@@ -284,54 +305,6 @@ playMove([Board,Player|Rest],[Ci,Li,Cf,Lf],FinalState):-
     setAt(Lf,PartialBoard,NewFinalLine,FinalBoard),
     removePieces([FinalBoard,Player|Rest], [Ci, Li, Cf, Lf],FinalState).
 
-removePieces(State,[Ci,Li,Cf,_Lf], NewState):-
-    Ci is Cf - 2,
-    removeCapturedPiece(State, Cf - 1, Li,NewState).
-removePieces(State,[Ci,Li,Cf,_Lf], NewState):-
-    Ci is Cf + 2,
-    removeCapturedPiece(State, Cf + 1, Li,NewState).
-removePieces(State,[_Ci,Li,Cf,Lf], NewState):-
-    Li is Lf - 2,
-    removeCapturedPiece(State, Cf, Lf - 1,NewState).
-removePieces(State,[_Ci,Li,Cf,Lf], NewState):-
-    Li is Lf + 2,
-    removeCapturedPiece(State, Cf, Lf + 1,NewState).
-removePieces(State,_,State).
-
-removeCapturedPiece([Board|Rest], C, L,NewState):-
-    at(L,Board,Line),
-    piece(emptyCell,EmptyCell),
-    setAt(C, Line, EmptyCell ,OldLine),
-    setAt(L,Board,OldLine,NewBoard),
-    increment_captured_pieces([NewBoard|Rest],NewState).
-
-
-
-getValidMoves(State, Moves):-
-
-    getValidMoves2(State, Moves2),
-    getValidMoves1(State, Moves1),
-    myConcat(Moves1, Moves2, Moves).
-
-
-getValidMoves1(State, Moves):- 
-    setof([Ci, Li, Cf, Lf], (Notation, State)^
-(   between(0, 5, Ci),
-    between(0, 4, Li),
-    between(0, 5, Cf),
-    between(0, 4, Lf),
-    notationToInts(Notation, [Ci, Li, Cf, Lf]),
-    isValidMove(State, Notation)), Moves) ; Moves = [].
-
-
-getValidMoves2(State, Moves):- 
-        setof([C, L], (Notation, State)^
-(   between(0, 5, C),
-    between(0, 4, L),
-    notationToInts(Notation, [C, L]),
-    isValidMove(State, Notation)),
-    Moves); Moves =[].
-
 
 playRound(State):-
     checkWinCondition(State,Winner),!,
@@ -344,14 +317,6 @@ playRound(State):-
     playMove(State,ConvertedMove,[NewBoard,Player|Rest]),!,
     nextPlayer(Player,NextPlayer),
     playRound([NewBoard,NextPlayer|Rest]),!.
-
-greedyChoice([Board ,player2|Rest], Move, player2, Moves) :-
-
-    setof(Score-Mv, NewGameState^Moves^(
-        member(Mv, Moves), 
-        playMove([Board ,player2|Rest], Mv, NewGameState),
-        evaluate_board(NewGameState, player2,  Score)),
-        [Score-Move | _]).
 
 
 playGame:-
@@ -414,3 +379,33 @@ evaluate_board([Board, player1|Rest], player1, Score):-
     getPlayerPieces([Board,player2|Rest], [_,N]),
     getPlayerPieces([Board,player1|Rest], [_,M]),
     Score = 10 * M - (10 * N).
+
+getValidMoves(State, Moves):-
+    getValidMoves2(State, Moves2),
+    getValidMoves1(State, Moves1),
+    myConcat(Moves1, Moves2, Moves).
+
+getValidMoves1(State, Moves):- 
+    setof([Ci, Li, Cf, Lf], (Notation, State)^
+(   between(0, 5, Ci),
+    between(0, 4, Li),
+    between(0, 5, Cf),
+    between(0, 4, Lf),
+    notationToInts(Notation, [Ci, Li, Cf, Lf]),
+    isValidMove(State, Notation)), Moves) ; Moves = [].
+getValidMoves2(State, Moves):- 
+        setof([C, L], (Notation, State)^
+(   between(0, 5, C),
+    between(0, 4, L),
+    notationToInts(Notation, [C, L]),
+    isValidMove(State, Notation)),
+    Moves); Moves =[].
+
+greedyChoice([Board ,player2|Rest], Move, player2, Moves) :-
+
+    setof(Score-Mv, NewGameState^Moves^(
+        member(Mv, Moves), 
+        playMove([Board ,player2|Rest], Mv, NewGameState),
+        evaluate_board(NewGameState, player2,  Score)),
+        [Score-Move | _]).
+
