@@ -2,7 +2,6 @@
 :- use_module(library(random)).
 :- use_module(library(system)).
 
-
 minimax([Board ,player2|Rest], Move, player2, Moves, Depth) :-
 
         setof(Score-Mv, NewGameState^Moves^(

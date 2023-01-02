@@ -4,6 +4,7 @@
 :- consult('state.pl').
 :- consult('io.pl').
 :- consult('move.pl').
+:- consult('ai.pl').
 
 
 
@@ -48,7 +49,7 @@ playDumbAI:-
     initialState(S),
     playRoundDumbAI(S).
 
-playDumbAI(State):-
+playRoundDumbAI(State):-
     checkWinCondition(State,Winner),!,
     write('Player '),write(Winner),write(' won the Game!').
     
