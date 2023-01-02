@@ -11,18 +11,22 @@ getValidMoves(State, Moves):-
     myConcat(Moves1, Moves2, Moves).
 
 getValidMoves1(State, Moves):- 
+    numberColumns(NC),
+    numberLines(NL),
     setof([Ci, Li, Cf, Lf], (Notation, State)^
-(   between(0, 5, Ci),
-    between(0, 4, Li),
-    between(0, 5, Cf),
-    between(0, 4, Lf),
+(   between(0, NC, Ci),
+    between(0, NL, Li),
+    between(0, NC, Cf),
+    between(0, NL, Lf),
     notationToInts(Notation, [Ci, Li, Cf, Lf]),
     isValidMove(State, Notation)), Moves) ; Moves = [].
 
 getValidMoves2(State, Moves):- 
+    numberColumns(NC),
+    numberLines(NL),
         setof([C, L], (Notation, State)^
-(   between(0, 5, C),
-    between(0, 4, L),
+(   between(0, NC, C),
+    between(0, NL, L),
     notationToInts(Notation, [C, L]),
     isValidMove(State, Notation)),
     Moves); Moves =[].
@@ -36,9 +40,10 @@ getValidMoves2(State, Moves):-
 
 createNodes(_,[]):-!.
 createNodes(Parent,[Move|Moves]):-
-    playMove(Parent,Move,Child),
-    asserta(node(Child,0)),
-    asserta(link(Child,Parent,Move)),
+    playMove(Parent,Move,[Board,Player|Rest]),
+    nextPlayer(Player,NextPlayer),
+    asserta(node([Board,NextPlayer|Rest],0)),
+    asserta(link([Board,NextPlayer|Rest],Parent,Move)),!,
     createNodes(Parent,Moves).
 
 
@@ -46,15 +51,15 @@ createNodes(Parent,[Move|Moves]):-
 expand(_,0):-!.
 expand(State,Depth):-
     getValidMoves(State,Moves),
-    createNodes(State,Moves),
+    createNodes(State,Moves),!,
     Depth1 is Depth - 1,
-    setof(Child,V^node(Child,V),Children),
-    expandChildren(Children,Depth1).
+    setof(Child,V^node(Child,V),Children),!,
+    expandChildren(Children,Depth1),!.
     
 expandChildren([],_):-!.
 expandChildren(_,0):-!.
 expandChildren([Child|Rest],Depth):-
-    expand(Child,Depth),
+    expand(Child,Depth),!,
     expandChildren(Rest,Depth).
 
   
@@ -84,16 +89,14 @@ min_max(State,0):-
 
 min_max(State,Depth):-
     findall(ChildState,(node(ChildState,Value),link(ChildState,State,Move)),Children),
-    Children == [],
-    write('Não tenho filhos carai\n'),!.
+    Children == [],!.
 min_max(State,Depth):-
-    write('entrei minimax\n'),
-    printNumber(X,Y),
-    findall(ChildState,(node(ChildState,Value),link(ChildState,State,Move)),Children),
+    getBoard(State,Board),
+    printBoard(Board),nl,
+    findall(ChildState,(node(ChildState,Value),link(ChildState,State,Move)),Children),!,
     Depth1 is Depth - 1,
-    min_max_list(Children,Depth1),
-    write('Hey'),
-    findall(Value-Move,(node(ChildState,Value),link(ChildState,State,Move)),ValueMoves),
+    min_max_list(Children,Depth1),!,
+    findall(Value-Move,(node(ChildState,Value),link(ChildState,State,Move)),ValueMoves),!,
     write(ValueMoves),nl.
     
 
