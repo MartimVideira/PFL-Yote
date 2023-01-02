@@ -1,5 +1,29 @@
 ?- set_prolog_flag(double_quotes,chars).
 :- consult('utils.pl').
+:- use_module(library(clpfd)).
+
+
+%merge two lists
+
+m2([A|As], [B|Bs], [A,B|Rs]) :-
+    !, m2(As, Bs, Rs).
+m2([], Bs, Bs) :- !.
+m2(As, [], As).
+
+evaluate_board([Board, player2|Rest], player2, Score):-
+    getPlayerPieces([Board,player2|Rest], [P2,N2]),
+    getPlayerPieces([Board,player1|Rest], [P1,N1]),
+    Score = P2,
+    write(Score).
+
+evaluate_board([Board, player1|Rest], player1, Score):-
+    getPlayerPieces([Board,player2|Rest], [_,N]),
+    getPlayerPieces([Board,player1|Rest], [_,M]),
+    Score = 10 * M - (10 * N).
+
+
+
+
 
 % Game Variables For More Flexibility
 numberColumns(6).
@@ -24,12 +48,16 @@ setPlayerPieces([Board,player1,_,Pieces2],Pieces,[Board,player1,Pieces,Pieces2])
 setPlayerPieces([Board,player2,Pieces1,_],Pieces,[Board,player2,Pieces1,Pieces]).
 
 notationToInts([Column,Line],[ColumnNumber,LineNumber]):-
-    char_code(Column,ColumnCode),
+    
     char_code('a',ACode),
     char_code('1',OneCode),
+
+    ColumnNumber #= ColumnCode - ACode,
+    LineNumber #= 4 - (LineCode - OneCode),
+    char_code(Column,ColumnCode),
     char_code(Line,LineCode),
-    ColumnNumber is ColumnCode - ACode,
-    LineNumber is 4 - (LineCode - OneCode),!.
+    !.
+
 notationToInts([Ci,Li,Cf,Lf],[CCi,LCi,CCf,LCf]):-
     notationToInts([Ci,Li],[CCi,LCi]),
     notationToInts([Cf,Lf],[CCf,LCf]),!.
@@ -211,11 +239,14 @@ getPlayerMove([Board,Player|Rest],Move):-
 getPlayerMove(State,Move):- getPlayerMove(State,Move).
 
 playMove([Board,Player|Rest],[C,L],NewState):-
+    getPlayerPieces([Board,Player|Rest], [N, _]),
+    N > 0,
     at(L,Board,Line),
     piece(Player,PlayerPiece),
     setAt(C,Line,PlayerPiece,NewLine),
     setAt(L,Board,NewLine,NewBoard),
     decrement_hand_pieces([NewBoard,Player|Rest],NewState).
+
 playMove([Board,Player|Rest],[Ci,Li,Cf,Lf],FinalState):-
     at(Li,Board,Line),
     piece(Player,PlayerPiece),
@@ -253,6 +284,25 @@ playRound(State):-
     checkWinCondition(State,Winner),!,
     write('Player '),write(Winner),write(' won the Game!').
 
+
+getValidMoves(State, Moves):- 
+    setof([Ci, Li, Cf, Lf], (Notation, State)^
+(   between(0, 5, Ci),
+    between(0, 4, Li),
+    between(0, 5, Cf),
+    between(0, 4, Lf),
+    notationToInts(Notation, [Ci, Li, Cf, Lf]),
+    isValidMove(State, Notation)), Moves).
+
+getValidMoves(State, Moves):- 
+        setof([C, L], (Notation, State)^
+(   between(0, 5, C),
+    between(0, 4, L),
+    notationToInts(Notation, [C, L]),
+    isValidMove(State, Notation)),
+    Moves).
+
+
 playRound(State):-
     printRound(State),
     getPlayerMove(State,Move),
@@ -260,6 +310,65 @@ playRound(State):-
     playMove(State,ConvertedMove,[NewBoard,Player|Rest]),!,
     nextPlayer(Player,NextPlayer),
     playRound([NewBoard,NextPlayer|Rest]),!.
+
+
+playRoundAI([Board, Player|Rest]):-
+    checkWinCondition([Board, Player|Rest],Winner),!,
+    write('Player '),write(Winner),write(' won the Game!').
+
+
+playRoundAI([Board, player2|Rest]):-
+
+    getValidMoves([Board ,player2|Rest], Moves),
+    random_member(MoveAI, Moves),
+    write(MoveAI),
+    playMove([Board,player2|Rest],MoveAI,[NewBoard,player2|NewRest]),!,
+    playRoundAI([NewBoard,player1|NewRest]),!.
+
+
+
+
+
+playRoundAI([Board, player1|Rest]):-
+    printRound([Board, player1|Rest]),
+    getPlayerMove([Board, player1|Rest],Move),
+    notationToInts(Move,ConvertedMove),
+    playMove([Board, player1|Rest],ConvertedMove,[NewBoard,player1|NewRest]),!,
+    playRoundSmartAI([NewBoard,player2|NewRest]),!.
+
+
+playRoundSmartAI([Board, player2|Rest]):-
+    getValidMoves([Board, player2|Rest], Moves),
+    smartChoice([Board ,player2|Rest], MoveAI, player2, Moves),
+    write(MoveAI),
+    playMove([Board,player2|Rest],MoveAI,[NewBoard,player2|NewRest]),!,
+    playRoundAI([NewBoard,player1|NewRest]),!.
+
+
+smartChoice([Board ,player2|Rest], [Ci, Li, Cf, Lf], player2, Moves) :-
+        setof(Score-[CCi, LCi, CCf, LCf],   
+        NewGameState^Moves^(
+            nl,nl,nl,
+        write(Moves),nl,nl,nl,
+        write(nl),
+        write(nl),
+        member([CCi, LCi, CCf, LCf], Moves), 
+        playMove([Board ,player2|Rest], [CCi, LCi, CCf, LCf], NewGameState),
+        evaluate_board(NewGameState, player2,  Score)),  [Score-[Ci, Li, Cf, Lf] | _]).
+
+smartChoice([Board ,player2|Rest], [C, L], player2, Moves) :-
+        write('kkkkkk'),
+        setof(Score-[CC, LC],   
+        NewGameState^Moves^(
+        nl,nl,nl,
+        write(Moves),nl,nl,nl,
+        write(nl),
+        write(nl),
+        member([CC, LC], Moves), 
+        write([CC, LC]),
+        playMove([Board ,player2|Rest], [CC, LC], NewGameState),
+        write('hola'),
+        evaluate_board(NewGameState, player2,  Score)),  [Score-[C,L] | _]).
 
 % Refazer esta funcão
 increment_captured_pieces([Board,Player|Rest],NewState):-
@@ -277,11 +386,16 @@ decrement_hand_pieces(State,NewState):-
 
 checkWinCondition([Board,_|Rest],player2):-
     numberPieces(N),
-    getPlayerPieces([Board,player1|Rest],[_,N]).
+    getPlayerPieces([Board,player2|Rest],[_,N]).
+    
 checkWinCondition([Board,_|Rest],player1):-
     numberPieces(N),
-    getPlayerPieces([Board,player2|Rest],[_,N]).
+    getPlayerPieces([Board,player1|Rest],[_,N]).
 
 playGame:-
     initialState(S),
     playRound(S).
+
+playAI:-
+    initialState([Board, player1|Rest]),
+    playRoundAI([Board, player1|Rest]).
