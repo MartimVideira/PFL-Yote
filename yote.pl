@@ -2,22 +2,10 @@
 ?- set_prolog_flag(answer_write_options,[max_depth(0)]).
 :- consult('utils.pl').
 :- consult('state.pl').
-:- consult('game_io.pl').
-:- use_module(library(clpfd)).
+:- consult('io.pl').
+:- consult('move.pl').
 
 
-validatePlayerMove(State,Move):-
-    isValidMove(State,Move),!.
-validatePlayerMove(State,Move):-
-    write('[INVALID MOVE] '),
-    whyNotValid(State,Move),fail.
-
-getPlayerMove([Board,Player|Rest],Move):-
-    write(Player),write(' Next Move:'),
-    read(AtomMove),
-    atom_chars(AtomMove,Move),
-    validatePlayerMove([Board,Player|Rest],Move),!.
-getPlayerMove(State,Move):- getPlayerMove(State,Move).
 
 playMove([Board,Player|Rest],[C,L],NewState):-
     at(L,Board,Line),
