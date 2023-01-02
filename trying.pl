@@ -4,6 +4,7 @@
 :- consult('io.pl').
 :- consult('move.pl').
 :- dynamic numberB/1.
+:- dynamic bestPath/3.
 
 getValidMoves(State, Moves):-
     getValidMoves2(State, Moves2),
@@ -30,12 +31,6 @@ getValidMoves2(State, Moves):-
     notationToInts(Notation, [C, L]),
     isValidMove(State, Notation)),
     Moves); Moves =[].
-
-
-
-% min_max(Player, State, BestMove): -
-%     expand(State, 3).
-
 
 
 createNodes(_,[]):-!.
@@ -66,43 +61,51 @@ expandChildren([Child|Rest],Depth):-
 evaluate_board([Board, _|Rest], Score):-
     getPlayerPieces([Board, player2|Rest], [_,CapturedPieces2]),
     getPlayerPieces([Board, player1|Rest], [_,CapturedPieces1]),
-    Score = (CapturedPieces2 - CapturedPieces1) * 100.
+    Score is (CapturedPieces2 - CapturedPieces1) * 100.
 
 
 
 min_max(State,0):-
     evaluate_board(State,BestValue),
     getBoard(State,Board),
-    printBoard(Board),nl,
+    %printBoard(Board),nl,
     retract(node(State,0)),
     asserta(node(State,BestValue)).
 
 min_max(State,Depth):-
     findall(ChildState,(node(ChildState,Value),link(ChildState,State,Move)),Children),
     Children == [],!.
-
-min_max(State,Depth, BestMove):-
+min_max(State,Depth):-
     getPlayer(State, player1),!,
     getBoard(State,Board),
-    printBoard(Board),nl,
+    %printBoard(Board),nl,
     findall(ChildState,(node(ChildState,Value),link(ChildState,State,Move)),Children),!,
     Depth1 is Depth - 1,
-    min_max_list(Children,Depth1, BestMove),!,
-    findall(Value-Move,(node(ChildState,Value),link(ChildState,State,Move)),ValueMoves),!,
-    at(0, ValueMoves, BestMove).
+    min_max_list(Children,Depth1),!,
+    findall([ChildState,Value,Move],(node(ChildState,Value),link(ChildState,State,Move)),ValueMoves),!,
+    at(0, ValueMoves,[C,V,M]),
+    asserta(bestPath(C,State,M)).
     
-
-min_max(State,Depth, BestMove):-
+min_max(State,Depth):-
     getBoard(State,Board),
-    printBoard(Board),nl,
+    %printBoard(Board),nl,
     findall(ChildState,(node(ChildState,Value),link(ChildState,State,Move)),Children),!,
     Depth1 is Depth - 1,
-    min_max_list(Children,Depth1, BestMove),!,
-    findall(Value-Move,(node(ChildState,Value),link(ChildState,State,Move)),ValueMoves),!,
+    min_max_list(Children,Depth1),!,
+    findall([ChildState,Value,Move],(node(ChildState,Value),link(ChildState,State,Move)),ValueMoves),!,
     length(ValueMoves, L),
-    at(L, ValueMoves, BestMove).
+    L1 is L -1 ,
+    at(L1, ValueMoves,[C,V,M]),
+    asserta(bestPath(C,State,M)).
 
 min_max_list([],_):-!.
-min_max_list([Child|Children],Depth, BestMove):-
-    min_max(Child,Depth, BestMove),!,
+min_max_list([Child|Children],Depth):-
+    min_max(Child,Depth),
     min_max_list(Children,Depth).
+
+
+mx(State):-
+    expand(State, 2),
+    min_max(State,2),
+    bestPath(C,State,BestMove),
+    write(BestMove),!.
