@@ -1,5 +1,8 @@
 :- use_module(library(clpfd)).
 
+
+
+
 notationToInts([Column,Line],[ColumnNumber,LineNumber]):-
     
     char_code('a',ACode),

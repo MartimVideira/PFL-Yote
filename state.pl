@@ -74,3 +74,21 @@ initialState([Board,player1,[N,0],[N,0]]):-
     myRepeat(Columns,NumberLines,Board).
 
 
+
+playMove([Board,Player|Rest],[C,L],NewState):-
+    at(L,Board,Line),
+    piece(Player,PlayerPiece),
+    setAt(C,Line,PlayerPiece,NewLine),
+    setAt(L,Board,NewLine,NewBoard),
+    decrement_hand_pieces([NewBoard,Player|Rest],NewState).
+
+playMove([Board,Player|Rest],[Ci,Li,Cf,Lf],FinalState):-
+    at(Li,Board,Line),
+    piece(Player,PlayerPiece),
+    piece(emptyCell,EmptyCell),
+    setAt(Ci,Line,EmptyCell,OldLine),
+    setAt(Li,Board,OldLine,PartialBoard),
+    at(Lf,PartialBoard,FinalLine),
+    setAt(Cf,FinalLine,PlayerPiece,NewFinalLine),
+    setAt(Lf,PartialBoard,NewFinalLine,FinalBoard),
+    removePieces([FinalBoard,Player|Rest], [Ci, Li, Cf, Lf],FinalState).

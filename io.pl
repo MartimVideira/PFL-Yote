@@ -1,3 +1,4 @@
+
 % Board Printing Rules
 printLine([]):-
     write('|'),nl.

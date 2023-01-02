@@ -18,15 +18,6 @@ minimax_step(MinMax, Board, BestMove, BestValue) :-
 	all_possible_moves(Color, Board, AllMoves),
     best_move(MinMax, AllMoves, BestMove, BestValue).
 
-evaluate_board([Board, player2|Rest], player2, Score):-
-    getPlayerPieces([Board,player2|Rest], [P2,N2]),
-    getPlayerPieces([Board,player1|Rest], [P1,N1]),
-    Score = P2.
-
-evaluate_board([Board, player1|Rest], player1, Score):-
-    getPlayerPieces([Board,player2|Rest], [_,N]),
-    getPlayerPieces([Board,player1|Rest], [_,M]),
-    Score = 10 * M - (10 * N).
 
 getValidMoves(State, Moves):-
     getValidMoves2(State, Moves2),
@@ -58,3 +49,19 @@ greedyChoice([Board ,player2|Rest], Move, player2, Moves) :-
         evaluate_board(NewGameState, player2,  Score)),
         [Score-Move | _]).
 
+
+
+MinMax(State) -> ([States])
+
+
+
+
+(preto) = -1000
+(branco) = -1000
+
+
+evaluateMinMax([Board,_|Rest], Score):-
+
+    getPlayerPieces([Board,player2|Rest], [_,N]),
+    getPlayerPieces([Board,player1|Rest], [_,M]),
+    Score = (10 * M - (10 * N)).
