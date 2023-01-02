@@ -346,7 +346,8 @@ playRoundSmartAI([Board, player2|Rest]):-
 
 
 smartChoice([Board ,player2|Rest], [Ci, Li, Cf, Lf], player2, Moves) :-
-        setof(Score-[CCi, LCi, CCf, LCf],   
+        write(Moves),
+        setof(Score-[CCi, LCi, CCf, LCf],
         NewGameState^Moves^(
             nl,nl,nl,
         write(Moves),nl,nl,nl,
