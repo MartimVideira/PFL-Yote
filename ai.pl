@@ -118,14 +118,13 @@ value([Board, _|Rest], Score):-
 
 min_max(State,0):-
     value(State,BestValue),
-    getBoard(State,Board),
     retractall(node(State,0)),
     asserta(node(State,BestValue)),!. 
 
-min_max(State,Depth):-
-    findall(ChildState,(node(ChildState,Value),link(ChildState,State,Move)),[]),!,
+min_max(State,_Depth):-
+    findall(ChildState,(node(ChildState,_Value),link(ChildState,State,_Move)),[]),!,
     value(State,BestValue),
-    getBoard(State,Board),
+    getBoard(State,_Board),
     retract(node(State,0)),
     asserta(node(State,BestValue)).
 
@@ -174,7 +173,7 @@ tryRetract(State):-
     findall(Value,node(State,Value),Values),
     retractRec(State,Values).
 
-retractRec(State,[]):-!.
+retractRec(_State,[]):-!.
 retractRec(State,[V|VS]):-
     retract(node(State,V)),
     retractRec(State,VS).
@@ -188,7 +187,7 @@ retractRec(State,[V|VS]):-
 minimax_choice(State, BestMove):-
     expand(State, 2),
     min_max(State,2),
-    bestPath(C,State,BestMove,V),
+    bestPath(_C,State,BestMove,_V),
     abolish(node/2),
     abolish(link/3),
     abolish(bestPath/4).

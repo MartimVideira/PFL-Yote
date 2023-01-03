@@ -24,8 +24,7 @@ playGame:-
     initial_state(S),
     playRound(S).
 
-
-playDumbAI:-
+playDumb:-
     initial_state(S),
     playRoundDumbAI(S).
 
@@ -37,13 +36,11 @@ playRoundDumbAI([Board, player2|Rest]):-
 
     valid_moves([Board ,player2|Rest], Moves),
     random_member(MoveAI, Moves),
-    write(MoveAI),
     move([Board,player2|Rest],MoveAI,[NewBoard,player2|NewRest]),!,
     playRoundDumbAI([NewBoard,player1|NewRest]).
 
 playRoundDumbAI([Board,player1|Rest]):-
     playRoundHuman([Board,player1|Rest],[NewBoard,player1|NewRest]),!,
-    write('Played Human Move'),
     playRoundDumbAI([NewBoard,player2|NewRest]).
 
 playRoundHuman([Board, player1|Rest],NewState):-
@@ -52,24 +49,24 @@ playRoundHuman([Board, player1|Rest],NewState):-
     notationToInts(Move,ConvertedMove),
     move([Board, player1|Rest],ConvertedMove,NewState).
 
-playAI:-
+playMinimax:-
     initial_state(State),
-    playRoundAI(State).
+    playRoundMinimax(State).
 
-playRoundAI(State):-
+playRoundMinimax(State):-
     game_over(State,Winner),!,
     write('Player '),write(Winner),write(' won the Game!').
 
-playRoundAI([Board, player2|Rest]):-
+playRoundMinimax([Board, player2|Rest]):-
     minimax_choice([Board ,player2|Rest], MoveAI),
     move([Board,player2|Rest],MoveAI,[NewBoard,player2|NewRest]),!,
-    playRoundAI([NewBoard,player1|NewRest]).
+    playRoundMinimax([NewBoard,player1|NewRest]).
 
-playRoundAI([Board,player1|Rest]):-
+playRoundMinimax([Board,player1|Rest]):-
     playRoundHuman([Board,player1|Rest],[NewBoard,player1|NewRest]),
-    playRoundAI([NewBoard,player2|NewRest]).
+    playRoundMinimax([NewBoard,player2|NewRest]).
 
-playAIAI:-
+playMinimaxAI:-
     initial_state(State),
     playRoundAIAI(State).
 
@@ -83,12 +80,24 @@ playRoundAIAI([Board,Player|Rest]):-
     move([Board,Player|Rest],MoveAI,[NewBoard,Player|NewRest]),!,
     playRoundAIAI([NewBoard,NextPlayer|NewRest]).
 
-playGreedy:-
-
-
 playMmGreedy:-
     initial_state(State),
     playRoundMmGreedy(State).
+
+
+playRoundGreedy([Board, player2|Rest]):-
+    valid_moves([Board, player2|Rest], Moves),
+    greedy_choice([Board ,player2|Rest], MoveAI, Moves),
+    move([Board,player2|Rest],MoveAI,[NewBoard,player2|NewRest]),!,
+    playRoundGreedy([NewBoard,player1|NewRest]).
+
+playRoundGreedy([Board,player1|Rest]):-
+    playRoundHuman([Board,player1|Rest],[NewBoard,player1|NewRest]),
+    playRoundGreedy([NewBoard,player2|NewRest]).
+
+playGreedy:-
+    initial_state(State),
+    playRoundGreedy(State).
 
 playRoundMmGreedy(State):-
     game_over(State,Winner),!,
@@ -144,10 +153,10 @@ menu:-
     write('----------\n'),
     write('     Yote\n'),
     write('----------\n'),
-    write('0) Jogar Contra Jogador.\n'),
-    write('1) Jogar Contra AI - Dumb.\n'),
-    write('2) Jogar Contra AI - Greedy.\n'),
-    write('3) Jogar Contra AI - Minimax.\n'),
+    write('1) Jogar Contra Jogador.\n'),
+    write('2) Jogar Contra AI - Dumb.\n'),
+    write('3) Jogar Contra AI - Greedy.\n'),
+    write('4) Jogar Contra AI - Minimax.\n'),
     write('5) Ver Minimax vs Minimax\n'),
     write('6) Ver Minimax vs Greedy\n'),
     write('7) Alterar Configurações do Jogo.\n'),
@@ -168,38 +177,47 @@ menu(6):-
     playMmGreedy,
     setGameConfig(C,L,P),
     menu.
-menu(4):-
-    write('Jogando Contra AI vs AI\n'),
+menu(5):-
+
     getGameConfig(C,L,P),
     aiBoard,
-    playAIAI,
+    playMinimaxAI,
+    setGameConfig(C,L,P),
+    menu.
+menu(4):-
+
+    getGameConfig(C,L,P),
+    aiBoard,
+    playMinimax,
     setGameConfig(C,L,P),
     menu.
 menu(3):-
-    write('Jogando Contra AI - Minimax\n'),
+
     getGameConfig(C,L,P),
     aiBoard,
-    playAI,
+    playGreedy,
     setGameConfig(C,L,P),
     menu.
+
 menu(2):-
-    write('Jogando Contra AI - Minimax\n'),
+
     getGameConfig(C,L,P),
     aiBoard,
-    playAI,
+    playDumb,
     setGameConfig(C,L,P),
     menu.
-menu(0):-
-    write('Jogando Contra Jogador\n'),
+
+menu(1):-
     playGame,
     menu.
+
+menu(_N):-
+    write('Escolha Inválida'),
+    menu.
+    
 menuGameConfig(1):-
     playerChooseGameConfig,
     menu.
 menuGameConfig(2):-
     menu.
-menu(N):-
-    write('Escolha Inválida'),
-    menu.
-
 play:- menu.
