@@ -64,11 +64,11 @@ decrement_hand_pieces(State,NewState):-
  *
  * Sets the condition for when the should end, declaring the winner.
  */
-game_over([Board,_|Rest],player2):-
+game_over([Board,_|Rest],player1):-
     numberPieces(N),
     getPlayerPieces([Board,player2|Rest],[_,N]).
     
-game_over([Board,_|Rest],player1):-
+game_over([Board,_|Rest],player2):-
     numberPieces(N),
     getPlayerPieces([Board,player1|Rest],[_,N]).
 
@@ -122,19 +122,19 @@ initial_state([Board,player1,[N,0],[N,0]]):-
 
 
 /**
- * playMove(+ [Board,Player|Rest],+[C,L], - NewState)
+ * move(+ [Board,Player|Rest],+[C,L], - NewState)
  *
  * Receives a Board, places the piece at column C, Line L 
  * and returns the new board via the argument - NewState.
  */
-playMove([Board,Player|Rest],[C,L],NewState):-
+move([Board,Player|Rest],[C,L],NewState):-
     at(L,Board,Line),
     piece(Player,PlayerPiece),
     setAt(C,Line,PlayerPiece,NewLine),
     setAt(L,Board,NewLine,NewBoard),
     decrement_hand_pieces([NewBoard,Player|Rest],NewState).
 
-playMove([Board,Player|Rest],[Ci,Li,Cf,Lf],FinalState):-
+move([Board,Player|Rest],[Ci,Li,Cf,Lf],FinalState):-
     at(Li,Board,Line),
     piece(Player,PlayerPiece),
     piece(emptyCell,EmptyCell),

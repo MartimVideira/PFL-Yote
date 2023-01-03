@@ -22,7 +22,6 @@ valid_moves(State, Moves):-
     valid_moves_change(State, Moves1),
     myConcat(Moves1, Moves2, Moves).
 
-
 /**
  * valid_moves_change(+ State, - Moves)
  *
@@ -75,7 +74,7 @@ createNodes(_,[]):-!.
  * performing a Min-Max search.
  */
 createNodes(Parent,[Move|Moves]):-
-    playMove(Parent,Move,[Board,Player|Rest]),
+    move(Parent,Move,[Board,Player|Rest]),
     nextPlayer(Player,NextPlayer),
     asserta(node([Board,NextPlayer|Rest],0)),
     asserta(link([Board,NextPlayer|Rest],Parent,Move)),!,
@@ -153,7 +152,6 @@ min_max(State,Depth):-
     Depth1 is Depth - 1,
     min_max_list(Children,Depth1),!,
     setof([Value,Move,ChildState],(node(ChildState,Value),link(ChildState,State,Move)),ValueMoves),!,
-    printAll(ValueMoves),
     findMax(ValueMoves,[V,M,C]),
     asserta(bestPath(C,State,M,V)),
     tryRetract(State),
@@ -196,10 +194,10 @@ minimax_choice(State, BestMove):-
     abolish(bestPath/4).
 
 
-greedy_choice([Board ,player2|Rest], Move, player2, Moves) :-
+greedy_choice([Board ,Player|Rest], Move, Moves) :-
 
     setof(Score-Mv, NewGameState^Moves^(
         member(Mv, Moves), 
-        playMove([Board ,player2|Rest], Mv, NewGameState),
-        value(NewGameState, player2,  Score)),
+        move([Board ,Player|Rest], Mv, NewGameState),
+        value(NewGameState, Score)),
         [Score-Move | _]).

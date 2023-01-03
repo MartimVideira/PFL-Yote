@@ -50,6 +50,7 @@ printLines([Line|Board],RowNumber):-
  */
 display_game([Board,_Player,[Player1Pieces,Player1Captured],[Player2Pieces,Player2Captured]]):-
     % Possibly Initialize Pieces
+    write('\33[2J'),
     piece(player1,Player1Piece),
     piece(player2,Player2Piece),
     write('Player1'),nl,
