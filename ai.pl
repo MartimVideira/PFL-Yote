@@ -73,45 +73,33 @@ evaluate_board([Board, _|Rest], Score):-
 min_max(State,0):-
     evaluate_board(State,BestValue),
     getBoard(State,Board),
-    %write('Value Was '),write(BestValue),nl,
-    %printBoard(Board),nl,
     retractall(node(State,0)),
     asserta(node(State,BestValue)),!. 
 
 min_max(State,Depth):-
     findall(ChildState,(node(ChildState,Value),link(ChildState,State,Move)),[]),!,
-    write('Olá\n'),nl,
     evaluate_board(State,BestValue),
     getBoard(State,Board),
     retract(node(State,0)),
     asserta(node(State,BestValue)).
 min_max(State,Depth):-
     getPlayer(State, player1),!,
-    write(player1),nl,
     findall(ChildState,(node(ChildState,Value),link(ChildState,State,Move)),Children),!,
     Depth1 is Depth - 1,
     min_max_list(Children,Depth1),!,
     setof([Value,Move,ChildState],(node(ChildState,Value),link(ChildState,State,Move)),ValueMoves),!,
-    write(Depth),write('Player '),write(player1),write('quer minimizar\n'),
-    printAll(ValueMoves),
     findMin(ValueMoves,[V,M,C]),
-    write('Escolheu o move que dá :'),write(V),nl,
     asserta(bestPath(C,State,M,V)),
     tryRetract(State),
     asserta(node(State,V)).
     
 min_max(State,Depth):-
-    getPlayer(State,P),write(P),nl,
-    getBoard(State,Board),
-    %printBoard(Board),nl,(ChildState,State,Move)),Children),!,
     findall(ChildState,(node(ChildState,Value),link(ChildState,State,Move)),Children),!,
     Depth1 is Depth - 1,
     min_max_list(Children,Depth1),!,
     setof([Value,Move,ChildState],(node(ChildState,Value),link(ChildState,State,Move)),ValueMoves),!,
-    write(Depth),write('Player '),write(P),write('quer maximizar\n'),
     printAll(ValueMoves),
     findMax(ValueMoves,[V,M,C]),
-    write('Chosen Move '),write([V]),nl,
     asserta(bestPath(C,State,M,V)),
     tryRetract(State),
     asserta(node(State,V)).
@@ -139,9 +127,6 @@ mx(State, BestMove):-
     expand(State, 2),
     min_max(State,2),
     bestPath(C,State,BestMove,V),
-    write(V),
-    write(' Foi o escolhido\n'),
-
     abolish(node/2),
     abolish(link/3),
     abolish(bestPath/4).
