@@ -30,7 +30,7 @@ playDumb:-
 
 playRoundDumbAI(State):-
     game_over(State,Winner),!,
-    write('Player '),write(Winner),write(' won the Game!').
+    write('Player '),write(Winner),write(' won the Game!'),nl.
     
 playRoundDumbAI([Board, player2|Rest]):-
 
@@ -55,7 +55,7 @@ playMinimax:-
 
 playRoundMinimax(State):-
     game_over(State,Winner),!,
-    write('Player '),write(Winner),write(' won the Game!').
+    write('Player '),write(Winner),write(' won the Game!'),nl.
 
 playRoundMinimax([Board, player2|Rest]):-
     minimax_choice([Board ,player2|Rest], MoveAI),
@@ -72,7 +72,7 @@ playMinimaxAI:-
 
 playRoundAIAI(State):-
     game_over(State,Winner),!,
-    write('Player '),write(Winner),write(' won the Game!').
+    write('Player '),write(Winner),write(' won the Game!'),nl.
 playRoundAIAI([Board,Player|Rest]):-
     display_game([Board,Player|Rest]),
     minimax_choice([Board ,Player|Rest], MoveAI),
@@ -80,11 +80,31 @@ playRoundAIAI([Board,Player|Rest]):-
     move([Board,Player|Rest],MoveAI,[NewBoard,Player|NewRest]),!,
     playRoundAIAI([NewBoard,NextPlayer|NewRest]).
 
-playMmGreedy:-
+playMmDumb:-
     initial_state(State),
-    playRoundMmGreedy(State).
+    playRoundMmDumb(State).
+playRoundMmDumb(State):-
+    game_over(State,Winner),!,
+    write('Player '),write(Winner),write(' won the Game!'),nl.
+playRoundMmDumb([Board,player1|Rest]):-
+    display_game([Board,player1|Rest]),
+    minimax_choice([Board ,player1|Rest], MoveAI),
+    move([Board,player1|Rest],MoveAI,[NewBoard,player1|NewRest]),!,
+    playRoundMmGreedy([NewBoard,player2|NewRest]).
+playRoundMmDumb([Board,player2|Rest]):-
+    display_game([Board,player2|Rest]),
+    valid_moves([Board,player2|Rest],Moves),
+    random_member([Board,player2|Rest],MoveAI,Moves),
+    sleep(0.5),
+    move([Board,player2|Rest],MoveAI,[NewBoard,player2|NewRest]),!,
+    playRoundMmDumb([NewBoard,player1|NewRest]).
 
-
+playGreedy:-
+    initial_state(State),
+    playRoundGreedy(State).
+playRoundGreedy(State):-
+    game_over(State,Winner),!,
+    write('Player '),write(Winner),write(' won the Game!'),nl.
 playRoundGreedy([Board, player2|Rest]):-
     valid_moves([Board, player2|Rest], Moves),
     greedy_choice([Board ,player2|Rest], MoveAI, Moves),
@@ -95,13 +115,13 @@ playRoundGreedy([Board,player1|Rest]):-
     playRoundHuman([Board,player1|Rest],[NewBoard,player1|NewRest]),
     playRoundGreedy([NewBoard,player2|NewRest]).
 
-playGreedy:-
-    initial_state(State),
-    playRoundGreedy(State).
 
+playMmGreedy:-
+    initial_state(State),
+    playRoundMmGreedy(State).
 playRoundMmGreedy(State):-
     game_over(State,Winner),!,
-    write('Player '),write(Winner),write(' won the Game!').
+    write('Player '),write(Winner),write(' won the Game!'),nl.
 playRoundMmGreedy([Board,player1|Rest]):-
     display_game([Board,player1|Rest]),
     minimax_choice([Board ,player1|Rest], MoveAI),
@@ -159,18 +179,25 @@ menu:-
     write('4) Jogar Contra AI - Minimax.\n'),
     write('5) Ver Minimax vs Minimax\n'),
     write('6) Ver Minimax vs Greedy\n'),
-    write('7) Alterar Configurações do Jogo.\n'),
-    write('8) Sair.\n'),
+    write('7) Ver Minmax vs Dumb\n'),
+    write('8) Alterar Configurações do Jogo.\n'),
+    write('9) Sair.\n'),
     read(Option),
     menu(Option).
-menu(8):-
+menu(9):-
     write('Obrigado!').
-menu(7):-
+menu(8):-
     write('Deseja Escolher As Configurações Do Jogo? \n'),
     write('0) Não.\n'),
     write('1) Sim.\n'),
     read(Option),
     menuGameConfig(Option).
+menu(7):-
+    getGameConfig(C,L,P),
+    aiBoard,!,
+    playMmDumb,
+    setGameConfig(C,L,P),
+    menu.
 menu(6):-
     getGameConfig(C,L,P),
     aiBoard,!,
@@ -178,35 +205,26 @@ menu(6):-
     setGameConfig(C,L,P),
     menu.
 menu(5):-
-
     getGameConfig(C,L,P),
     aiBoard,
     playMinimaxAI,
     setGameConfig(C,L,P),
     menu.
 menu(4):-
-
     getGameConfig(C,L,P),
     aiBoard,
     playMinimax,
     setGameConfig(C,L,P),
     menu.
 menu(3):-
-
-    getGameConfig(C,L,P),
-    aiBoard,
     playGreedy,
-    setGameConfig(C,L,P),
     menu.
-
 menu(2):-
-
     getGameConfig(C,L,P),
     aiBoard,
     playDumb,
     setGameConfig(C,L,P),
     menu.
-
 menu(1):-
     playGame,
     menu.
