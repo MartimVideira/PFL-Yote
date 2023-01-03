@@ -1,7 +1,14 @@
 :- use_module(library(clpfd)).
 
 
-
+/**
+ * notationToInts(+[Column,Line], -[ColumnNumber,LineNumber]])
+ *
+ * Method that receives a char representing a column of the board and an integer representing
+ * a line of the board where they want to play the piece, and converts them into
+ * a list of two integers, the number of the column and number of the line, respectively.
+ * For example, it receives ["a", 5] and turns it into [0, 5].
+ */
 notationToInts([Column,Line],[ColumnNumber,LineNumber]):-
     
     char_code('a',ACode),
@@ -14,17 +21,36 @@ notationToInts([Column,Line],[ColumnNumber,LineNumber]):-
     char_code(Line,LineCode),
     !.
 
+/**
+ * notationToInts(+ [Ci,Li,Cf,Lf], - [CCi,LCi,CCf,LCf])
+ *
+ * Method that receives the notation of a move they want to play to move a piece, and converts them into
+ * a list of four integers, the numbers of the columns and numbers of the lines, respectively.
+ * For example, it receives ["a", 5, "a", 6] and turns it into [0, 5, 0, 6].
+ */
 notationToInts([Ci,Li,Cf,Lf],[CCi,LCi,CCf,LCf]):-
     notationToInts([Ci,Li],[CCi,LCi]),
     notationToInts([Cf,Lf],[CCf,LCf]),!.
 
 
+/**
+ * validatePlayerMove(+ State, + Move)
+ *
+ * Wrapper that checks wheter a certain move is valid or not by calling isValidMove(+ State, + Move),
+ * and in the case it is not, displays the reason why by invoking whyNotValid( + State, + Move) method.
+ */
 validatePlayerMove(State,Move):-
     isValidMove(State,Move),!.
 validatePlayerMove(State,Move):-
     write('[INVALID MOVE] '),
     whyNotValid(State,Move),fail.
 
+
+/**
+ * getPlayerMove(+ [Board,Player|Rest], - Move)
+ *
+ * Retrieves the player's move of choice from the interface by reading it.
+ */
 getPlayerMove([Board,Player|Rest],Move):-
     write(Player),write(' Next Move:'),
     read(AtomMove),
@@ -32,6 +58,12 @@ getPlayerMove([Board,Player|Rest],Move):-
     validatePlayerMove([Board,Player|Rest],Move),!.
 getPlayerMove(State,Move):- getPlayerMove(State,Move).
 
+
+/**
+ * validPosition(+ C, + L)
+ *
+ * Checks whether or not a position is valid for the player to use it.
+ */
 validPosition(C,L):-
     char_code(L,LCode),
     char_code('1',OneCode),
@@ -44,15 +76,31 @@ validPosition(C,L):-
     CCode =< FCode,
     CCode >= ACode,!.
 
+/**
+ * verticalMove(+ Ci,+ Li,+ Ci,+ Lf)
+ *
+ * Checks whether or not the move made was done vertically
+ */
 verticalMove(Ci,Li,Ci,Lf):-
     Li is Lf + 1.
 verticalMove(Ci,Li,Ci,Lf):-
     Li is Lf - 1.
+
+/**
+ * horizontalMove(+ Ci,+ Li,+ Cf,+ Li)
+ *
+ * Checks whether or not the move made was done horizontally
+ */
 horizontalMove(Ci,Li,Cf,Li):-
     Ci is Cf + 1.
 horizontalMove(Ci,Li,Cf,Li):-
     Ci is Cf - 1.
 
+/**
+ * captureHorizontal(+ Board, + Player, + Ci,+ Li,+ Cf,+ Li)
+ *
+ * Checks if the movement made was a horizontal capture.
+ */
 captureHorizontal(Board,Player,Ci, Li, Cf, Li):-
     (
         piece(emptyCell,EmptyCell),
@@ -72,6 +120,11 @@ captureHorizontal(Board,Player,Ci, Li, Cf, Li):-
         SelectedCell \= EmptyCell
     ).
 
+/**
+ * captureVertical(+ Board, + Player, + Ci,+ Li,+ Ci,+ Lf)
+ *
+ * Checks if the movement made was a vertical capture.
+ */
 captureVertical(Board,Player,Ci, Li, Ci, Lf):-
     (
         piece(Player,PlayerPiece),
@@ -88,7 +141,11 @@ captureVertical(Board,Player,Ci, Li, Ci, Lf):-
         PlayerPiece \= SelectedCell, SelectedCell\= EmptyCell
     ).
 
-% Moving A Piece Into The Board
+/**
+ * isValidMove(State,[+ C, + L])
+ *
+ * Checks if placing a piece is valid or not.
+ */
 isValidMove(State,[C,L]):-
     getPlayerPieces(State,[PiecesInHand,_]),
     PiecesInHand > 0,
@@ -98,7 +155,11 @@ isValidMove(State,[C,L]):-
     notationToInts([C,L],[CC,LC]),
     getCell(Board,CC,LC,EmptyCell),!.
 
-% Moving A Pice Inside The Board
+/**
+ * isValidMove(+ [Board,Player|_], + [Ci,Li,Cf,Lf])
+ *
+ * Checks if moving a piece is valid or not.
+ */
 isValidMove([Board,Player|_],[Ci,Li,Cf,Lf]):-
     validPosition(Ci,Li),
     validPosition(Cf,Lf),
@@ -112,6 +173,11 @@ isValidMove([Board,Player|_],[Ci,Li,Cf,Lf]):-
      captureHorizontal(Board,Player, CCi,LCi,CCf,LCf); 
      captureVertical(Board,Player, CCi,LCi,CCf,LCf)).
 
+/**
+ * whyNotValid(+ _State, +[C,L])
+ *
+ * Displays and prints to screen why move what not valid.
+ */
 whyNotValid(_State,[C,L]):-
     \+ validPosition(C,L),!,
     write('That Is Not A Valid Position\n').

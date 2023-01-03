@@ -8,13 +8,29 @@
 :- dynamic node/2.
 :- dynamic link/3.
 
-getValidMoves(State, Moves):-
+
+/**
+ * valid_moves(+ State, - Moves)
+ *
+ * Generates every possible move given the state of the board
+ * as well as the player who should be playing and their pieces,
+ * all contained in the State argument. Those are returned in - Movesh
+ */
+valid_moves(State, Moves):-
     
-    getValidMoves2(State, Moves2),
-    getValidMoves1(State, Moves1),
+    valid_moves_place(State, Moves2),
+    valid_moves_change(State, Moves1),
     myConcat(Moves1, Moves2, Moves).
 
-getValidMoves1(State, Moves):-
+
+/**
+ * valid_moves_change(+ State, - Moves)
+ *
+ * Generates every possible move given the state of the board,
+ * but only the ones that consist in moving a piece from
+ * one place to the other. Those are returned in - Moves.
+ */
+valid_moves_change(State, Moves):-
     numberColumns(NC),
     numberLines(NL),
     setof([Ci, Li, Cf, Lf], (Notation, State)^
@@ -26,10 +42,19 @@ getValidMoves1(State, Moves):-
     isValidMove(State, Notation)), Moves) ; Moves = [].
 
 
-getValidMoves2(State,[]):- 
+
+valid_moves_place(State,[]):- 
     getPlayerPieces(State,[0,_]),!.
 
-getValidMoves2(State, Moves):- 
+
+/**
+ * valid_moves_place(+ State, - Moves)
+ *
+ * Generates every possible move given the state of the board,
+ * but only the ones that consist in placing a piece on
+ * the board. Those are returned in - Moves.
+ */
+valid_moves_place(State, Moves):- 
     numberColumns(NC),
     numberLines(NL),
         setof([C, L], (Notation, State)^
@@ -41,6 +66,14 @@ getValidMoves2(State, Moves):-
 
 
 createNodes(_,[]):-!.
+
+/**
+ * createNodes(+ Parent, + [Move|Moves])
+ *
+ * Creates a representation of the board and the boards that could originate from it.
+ * It creates a tree-like data structure so that it is easir to traverse when
+ * performing a Min-Max search.
+ */
 createNodes(Parent,[Move|Moves]):-
     playMove(Parent,Move,[Board,Player|Rest]),
     nextPlayer(Player,NextPlayer),
@@ -50,9 +83,18 @@ createNodes(Parent,[Move|Moves]):-
 
 
 
+
 expand(_,0):-!.
+
+/**
+ * expand(+ State, + Depth)
+ *
+ * Given a certain depth, it calls createNodes(+ Parent, + [Move|Moves]) to recursively
+ * generate a tree-like data structure to represent the board and possible boards that may branch
+ * from the given position.
+ */
 expand(State,Depth):-
-    getValidMoves(State,Moves),
+    valid_moves(State,Moves),
     createNodes(State,Moves),!,
     Depth1 is Depth - 1,
     setof(Child,V^node(Child,V),Children),!,
@@ -64,24 +106,37 @@ expandChildren([Child|Rest],Depth):-
     expand(Child,Depth),!,
     expandChildren(Rest,Depth).
 
-  
-evaluate_board([Board, _|Rest], Score):-
+/**
+ * value(+ [Board, _|Rest], - Score)
+ *
+ * Given a certain State with board and player knowledge it evaluates the board
+ * and returns its score via the argument - Score.
+ */
+value([Board, _|Rest], Score):-
     getPlayerPieces([Board, player2|Rest], [_,CapturedPieces2]),
     getPlayerPieces([Board, player1|Rest], [_,CapturedPieces1]),
     Score is (CapturedPieces1 - CapturedPieces2) * 100.
 
 min_max(State,0):-
-    evaluate_board(State,BestValue),
+    value(State,BestValue),
     getBoard(State,Board),
     retractall(node(State,0)),
     asserta(node(State,BestValue)),!. 
 
 min_max(State,Depth):-
     findall(ChildState,(node(ChildState,Value),link(ChildState,State,Move)),[]),!,
-    evaluate_board(State,BestValue),
+    value(State,BestValue),
     getBoard(State,Board),
     retract(node(State,0)),
     asserta(node(State,BestValue)).
+
+/**
+ * min_max(+ State, + Depth)
+ *
+ * Performs a Min-Max search on the given State (+ State) up until a certain Depth (+Depth).
+ * Stores values assigned to each child-board on rules that we consult later to extract the one
+ * that was evaluated with the highest score.
+ */
 min_max(State,Depth):-
     getPlayer(State, player1),!,
     findall(ChildState,(node(ChildState,Value),link(ChildState,State,Move)),Children),!,
@@ -110,7 +165,11 @@ min_max_list([Child|Children],Depth):-
     min_max_list(Children,Depth).
 
 
-
+/**
+ * tryRetract(+ State)
+ *
+ * Tries to retract all possible 'node' rules associated to a certain state.
+ */
 tryRetract(State):-
     findall(Value,node(State,Value),[]),!.
 tryRetract(State):-
@@ -122,8 +181,13 @@ retractRec(State,[V|VS]):-
     retract(node(State,V)),
     retractRec(State,VS).
 
-
-mx(State, BestMove):-
+/**
+ * minimax_choice(+ State, - BestMove)
+ *
+ * Receives a State an performs a Min-Max search of depth 2.
+ * Then, returns the best move found via the argument - Best Move.
+ */
+minimax_choice(State, BestMove):-
     expand(State, 2),
     min_max(State,2),
     bestPath(C,State,BestMove,V),
@@ -132,10 +196,10 @@ mx(State, BestMove):-
     abolish(bestPath/4).
 
 
-greedyChoice([Board ,player2|Rest], Move, player2, Moves) :-
+greedy_choice([Board ,player2|Rest], Move, player2, Moves) :-
 
     setof(Score-Mv, NewGameState^Moves^(
         member(Mv, Moves), 
         playMove([Board ,player2|Rest], Mv, NewGameState),
-        evaluate_board(NewGameState, player2,  Score)),
+        value(NewGameState, player2,  Score)),
         [Score-Move | _]).

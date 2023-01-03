@@ -9,13 +9,13 @@ Então é o seguinte. Na função **playRoundSmartAI**, o nosso AI tenta fazer u
 
 Vamos olhar para a função **playRoundSmartAI**:
 ```prolog
-    getValidMoves([Board, player2|Rest], Moves),
+    valid_moves([Board, player2|Rest], Moves),
     smartChoice([Board ,player2|Rest], MoveAI, player2, Moves),
 ```
 
-Como podes ver, os movimentos são gerados na função **getValidMoves**. No entanto, esta função tem **duas** versões:
+Como podes ver, os movimentos são gerados na função **valid_moves**. No entanto, esta função tem **duas** versões:
 ```prolog
-getValidMoves(State, Moves):- 
+valid_moves(State, Moves):- 
     setof([Ci, Li, Cf, Lf], (Notation, State)^
 (   between(0, 5, Ci),
     between(0, 4, Li),
@@ -24,7 +24,7 @@ getValidMoves(State, Moves):-
     notationToInts(Notation, [Ci, Li, Cf, Lf]),
     isValidMove(State, Notation)), Moves).
 
-getValidMoves(State, Moves):- 
+valid_moves(State, Moves):- 
         setof([C, L], (Notation, State)^
 (   between(0, 5, C),
     between(0, 4, L),

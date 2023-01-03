@@ -11,11 +11,23 @@ printLine(Line,Number):-
     write(' '),
     printLine(Line).
 
+/**
+ * printHeader
+ *
+ * Prints game header.
+ */
 printHeader:-
     write('   '),
-    myIntersperse("ABCDEF"," ",Header),
+    numberColumns(Columns),
+    myTake(Columns,"ABCDEFGHIJKLMNOPQRSTUVXYZ",Letras),
+    myIntersperse(Letras," ",Header),
     printList(Header),nl.
 
+/**
+ * printBoard(+ Board)
+ *
+ * Prints game board.
+ */
 printBoard(Board):-
     numberLines(LineNumber),
     printHeader,
@@ -27,7 +39,16 @@ printLines([Line|Board],RowNumber):-
     RowsLeft is RowNumber -1,
     printLines(Board,RowsLeft).
 
-printRound([Board,_Player,[Player1Pieces,Player1Captured],[Player2Pieces,Player2Captured]]):-
+
+
+/**
+ * displayGame(+ [Board,_Player,[Player1Pieces,Player1Captured],[Player2Pieces,Player2Captured]])
+ *
+ * It receives a variable that represents the Board State, with information on the pieces of each player,
+ * including the ones that were captured. After that, prints out the game for the user to play via
+ * the console / interface.
+ */
+display_game([Board,_Player,[Player1Pieces,Player1Captured],[Player2Pieces,Player2Captured]]):-
     % Possibly Initialize Pieces
     piece(player1,Player1Piece),
     piece(player2,Player2Piece),

@@ -24,6 +24,11 @@ myIntersperse([X|XS],YS,Res):-
 at(0,[X|_],X):-!.
 at(N,[_|XS],Elem):- N1 is N -1 , at(N1,XS,Elem).
 
+myTake(0,XS,[]):-!.
+myTake(N,[X|XS],[X|YS]):-
+    N1 is N - 1,
+    myTake(N1,XS,YS).
+
 setAt(0,[_|XS],Y,[Y|XS]):-!.
 setAt(N,[X|XS],Y,[X|ZS]):-
     N1 is N - 1,
