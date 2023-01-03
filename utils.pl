@@ -32,3 +32,33 @@ setAt(N,[X|XS],Y,[X|ZS]):-
 printAll([]).
 printAll([X|XS]):-
     write(X),nl,printAll(XS).
+
+printValues([]).
+printValues([X-_-_|XS]):-
+    write(X),nl,printValues(XS).
+%
+%findMin([X|XS],Min):- findMin(XS,X,Min).
+%findMin([V],V,V):-!.
+%findMin([V1|VS],VC,V):-
+%    V1 >= VC,!,
+%    findMin(VS,VC,V).
+%findMin([V1|VS],V1,V):- findMin(VS,V1,V).
+%
+%
+%findMax([X|XS],Max):- findMax(XS,X,Max).
+%findMax([V],V,V):-!.
+%findMax([V1|VS],VC,V):-
+%    V1 < VC,!.
+%    findMax(VS,VC,V).
+%findMax([V1|VS],V1,V):- findMax(VS, V1, V).
+
+%max of list
+findMax([[V,C,M]],[V,C,M]):-!.
+findMax([[V,C,M]|XS], [VC,CC,MC]):- findMax(XS, [VC,CC,MC]), VC >= V.
+findMax([[V,C,M]|XS],[V,C,M]):- findMax(XS, [VC,CC,MM]), V >  VC.
+
+findMin([[V,C,M]],[V,C,M]) :- !.
+%max_l([X],X). %unuse cut
+%max_l([X],X):- false.
+findMin([[V,C,M]|XS], [VC,CC,MC]):- findMin(XS, [VC,CC,MC]), VC < V.
+findMin([[V,C,M]|XS], [V,C,M]):- findMin(XS, [VC,CC,MM]), V =<  VC.

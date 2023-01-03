@@ -2,14 +2,14 @@
 
 
 
-
 notationToInts([Column,Line],[ColumnNumber,LineNumber]):-
     
     char_code('a',ACode),
     char_code('1',OneCode),
-
+    numberLines(TotalLines),
+    TotalLines1 is TotalLines - 1,
     ColumnNumber #= ColumnCode - ACode,
-    LineNumber #= 4 - (LineCode - OneCode),
+    LineNumber #= TotalLines1 - (LineCode - OneCode),
     char_code(Column,ColumnCode),
     char_code(Line,LineCode),
     !.

@@ -7,9 +7,6 @@
 :- consult('ai.pl').
 
 
-
-
-
 playRound(State):-
     checkWinCondition(State,Winner),!,
     write('Player '),write(Winner),write(' won the Game!').
@@ -64,8 +61,7 @@ playRoundAI(State):-
     write('Player '),write(Winner),write(' won the Game!').
 
 playRoundAI([Board, player2|Rest]):-
-    getValidMoves([Board, player2|Rest], Moves),
-    greedyChoice([Board ,player2|Rest], MoveAI, player2, Moves),
+    mx([Board ,player2|Rest], MoveAI),
     write(MoveAI),
     playMove([Board,player2|Rest],MoveAI,[NewBoard,player2|NewRest]),!,
     playRoundAI([NewBoard,player1|NewRest]).

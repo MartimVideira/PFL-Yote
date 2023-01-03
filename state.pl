@@ -1,6 +1,6 @@
 % Game Variables For More Flexibility
-numberColumns(6).
-numberLines(5).
+numberColumns(3).
+numberLines(3).
 numberPieces(2).
 piece(emptyCell,' ').
 piece(player1,'O').
