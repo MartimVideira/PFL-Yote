@@ -95,7 +95,6 @@ playRoundMmDumb([Board,player2|Rest]):-
     display_game([Board,player2|Rest]),
     valid_moves([Board,player2|Rest],Moves),
     random_member([Board,player2|Rest],MoveAI,Moves),
-    sleep(0.5),
     move([Board,player2|Rest],MoveAI,[NewBoard,player2|NewRest]),!,
     playRoundMmDumb([NewBoard,player1|NewRest]).
 
@@ -131,7 +130,6 @@ playRoundMmGreedy([Board,player2|Rest]):-
     display_game([Board,player2|Rest]),
     valid_moves([Board,player2|Rest],Moves),
     greedy_choice([Board,player2|Rest],MoveAI,Moves),
-    sleep(0.5),
     move([Board,player2|Rest],MoveAI,[NewBoard,player2|NewRest]),!,
     playRoundMmGreedy([NewBoard,player1|NewRest]).
 
@@ -212,7 +210,7 @@ menu(5):-
     menu.
 menu(4):-
     getGameConfig(C,L,P),
-    aiBoard,
+    %aiBoard,
     playMinimax,
     setGameConfig(C,L,P),
     menu.

@@ -9,7 +9,7 @@
 :- dynamic link/3.
 
 
-% Conseguir incluir módulos diferentes em diferentes implementações de prolog!
+
 include_between:-
     current_prolog_flag(dialect, swi),!.
 include_between:-
